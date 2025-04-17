@@ -78,13 +78,11 @@ export default function LessonPage() {
   }, [post, fileUri])
 
   useEffect(() => {
-    console.log(id)
     const fetchPost = async () => {
       try {
         const response = await axios.get(
           `https://shams-almaarif.com/wp-json/wp/v2/posts/${id}`
         )
-        console.log(response.data)
         setPost(response.data)
         navigation.setOptions({ title: response.data?.title?.rendered })
       } catch (err) {
@@ -99,14 +97,7 @@ export default function LessonPage() {
 
   if (loading) {
     return (
-      <SafeAreaView
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'white',
-          padding: 16
-        }}>
+      <SafeAreaView>
         <LoadingSpinner />
         <StatusBar barStyle='dark-content' backgroundColor='#16a34a' />
       </SafeAreaView>
@@ -115,14 +106,7 @@ export default function LessonPage() {
 
   if (error) {
     return (
-      <SafeAreaView
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'white',
-          padding: 16
-        }}>
+      <SafeAreaView>
         <Text
           style={{
             color: 'red',
@@ -140,7 +124,7 @@ export default function LessonPage() {
   }
 
   return (
-    <SafeAreaView>
+    <SafeAreaView className='flex h-full bg-white dark:bg-gray-900'>
       <ScrollView className='flex h-full bg-white dark:bg-gray-900'>
         <View className='sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800'>
           <View className='px-4 py-3 flex items-center'>
@@ -180,15 +164,15 @@ export default function LessonPage() {
           {/* <View className='mt-12'>
           <NoteSection postId={post.id} />
           </View> */}
-          {/* {post?.meta['the-audio-of-the-lesson'] && sound && (
-            <AudioPlayer
-              sound={sound}
-              title={post.title.rendered}
-              duration={post.duration}
-            />
-          )} */}
         </View>
       </ScrollView>
+      {post?.meta['the-audio-of-the-lesson'] && (
+        <AudioPlayer
+        // sound={sound}
+        // title={post.title.rendered}
+        // duration={post.duration}
+        />
+      )}
     </SafeAreaView>
   )
 }

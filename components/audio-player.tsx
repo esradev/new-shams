@@ -1,167 +1,111 @@
 import type React from 'react'
+import { View, Pressable, Text } from 'react-native'
+import Slider from '@react-native-community/slider'
+
 import { useState, useRef, useEffect } from 'react'
-import { Text, View, Pressable } from 'react-native'
 import {
   Play,
   Pause,
   SkipBack,
   SkipForward,
-  Download,
   Volume2,
-  Volume1,
-  VolumeX,
-  ChevronUp,
-  ChevronDown,
-  Repeat,
-  Bookmark,
-  RotateCcw
+  Download,
+  Minimize2,
+  Maximize2
 } from 'lucide-react-native'
 
-interface AudioPlayerProps {
-  sound: {
-    uri: string
-  }
-}
-
-export default function AudioPlayer({ sound }: AudioPlayerProps) {
+export default function AudioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
-  const [audioDuration, setAudioDuration] = useState(0)
   const [volume, setVolume] = useState(0.7)
+  const [expanded, setExpanded] = useState(false)
   const [playbackRate, setPlaybackRate] = useState(1)
-  const [isMuted, setIsMuted] = useState(false)
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [isLooping, setIsLooping] = useState(false)
-  const [bookmarks, setBookmarks] = useState<number[]>([])
+  const [isActive, setIsActive] = useState(false)
+  const [currentLesson, setCurrentLesson] = useState({
+    title: 'Introduction to Quranic Tajweed',
+    course: 'Quranic Studies',
+    audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+  })
 
   const audioRef = useRef<HTMLAudioElement>(null)
-  const animationRef = useRef<number>()
-  const analyzerRef = useRef<AnalyserNode | null>(null)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
 
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
+    // Initialize audio element
+    if (audioRef.current) {
+      audioRef.current.volume = volume
 
-    const setAudioData = () => {
-      setAudioDuration(audio.duration)
-    }
+      const handleLoadedMetadata = () => {
+        if (audioRef.current) {
+          setDuration(audioRef.current.duration)
+        }
+      }
 
-    const setAudioTime = () => {
-      setCurrentTime(audio.currentTime)
-    }
+      const handleTimeUpdate = () => {
+        if (audioRef.current) {
+          setCurrentTime(audioRef.current.currentTime || 0)
+        }
+      }
 
-    const handleEnded = () => {
-      if (isLooping) {
-        audio.currentTime = 0
-        audio.play()
-      } else {
+      const handleEnded = () => {
         setIsPlaying(false)
         setCurrentTime(0)
       }
-    }
 
-    // Events
-    audio.addEventListener('loadeddata', setAudioData)
-    audio.addEventListener('timeupdate', setAudioTime)
-    audio.addEventListener('ended', handleEnded)
+      audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata)
+      audioRef.current.addEventListener('timeupdate', handleTimeUpdate)
+      audioRef.current.addEventListener('ended', handleEnded)
 
-    return () => {
-      audio.removeEventListener('loadeddata', setAudioData)
-      audio.removeEventListener('timeupdate', setAudioTime)
-      audio.removeEventListener('ended', handleEnded)
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.removeEventListener(
+            'loadedmetadata',
+            handleLoadedMetadata
+          )
+          audioRef.current.removeEventListener('timeupdate', handleTimeUpdate)
+          audioRef.current.removeEventListener('ended', handleEnded)
+        }
+      }
     }
-  }, [isLooping])
+  }, [])
 
   useEffect(() => {
-    if (!isPlaying) {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-      return
+    // Set active state when there's a lesson
+    setIsActive(!!currentLesson.audioSrc)
+  }, [currentLesson])
+
+  useEffect(() => {
+    // Update playback rate when changed
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate
     }
-
-    if (!audioContextRef.current) {
-      setupAudioContext()
-    }
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    }
-  }, [isPlaying])
-
-  const setupAudioContext = () => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    const AudioContext =
-      window.AudioContext || (window as any).webkitAudioContext
-    audioContextRef.current = new AudioContext()
-    analyzerRef.current = audioContextRef.current.createAnalyser()
-    sourceRef.current = audioContextRef.current.createMediaElementSource(audio)
-
-    sourceRef.current.connect(analyzerRef.current)
-    analyzerRef.current.connect(audioContextRef.current.destination)
-
-    analyzerRef.current.fftSize = 256
-  }
+  }, [playbackRate])
 
   const togglePlay = () => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    if (isPlaying) {
-      audio.pause()
-    } else {
-      if (audioContextRef.current?.state === 'suspended') {
-        audioContextRef.current.resume()
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause()
+      } else {
+        audioRef.current.play()
       }
-      audio.play()
+      setIsPlaying(!isPlaying)
     }
-    setIsPlaying(!isPlaying)
   }
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const audio = audioRef.current
-    if (!audio) return
-
     const newTime = Number.parseFloat(e.target.value)
-    audio.currentTime = newTime
     setCurrentTime(newTime)
-  }
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    const newVolume = Number.parseFloat(e.target.value)
-    audio.volume = newVolume
-    setVolume(newVolume)
-    setIsMuted(newVolume === 0)
-  }
-
-  const toggleMute = () => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    if (isMuted) {
-      audio.volume = volume || 0.7
-      setIsMuted(false)
-    } else {
-      audio.volume = 0
-      setIsMuted(true)
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime
     }
   }
 
-  const handlePlaybackRateChange = (rate: number) => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    audio.playbackRate = rate
-    setPlaybackRate(rate)
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = Number.parseFloat(e.target.value)
+    setVolume(newVolume)
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume
+    }
   }
 
   const formatTime = (time: number) => {
@@ -172,279 +116,179 @@ export default function AudioPlayer({ sound }: AudioPlayerProps) {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
-  const skipBackward = () => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    audio.currentTime = Math.max(0, audio.currentTime - 10)
+  const handleDownload = () => {
+    // Create a temporary link to download the audio file
+    const link = document.createElement('a')
+    link.href = currentLesson.audioSrc
+    link.download = `${currentLesson.title}.mp3`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
-  const skipForward = () => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    audio.currentTime = Math.min(audio.duration, audio.currentTime + 10)
+  const toggleExpanded = () => {
+    setExpanded(!expanded)
   }
 
-  const toggleLoop = () => {
-    setIsLooping(!isLooping)
+  const changePlaybackRate = () => {
+    // Cycle through playback rates: 1 -> 1.5 -> 2 -> 0.75 -> 1
+    const rates = [1, 1.5, 2, 0.75]
+    const currentIndex = rates.indexOf(playbackRate)
+    const nextIndex = (currentIndex + 1) % rates.length
+    setPlaybackRate(rates[nextIndex])
   }
 
-  const addBookmark = () => {
-    if (audioRef.current) {
-      const time = audioRef.current.currentTime
-      setBookmarks(prev => [...prev, time])
-    }
-  }
-
-  const jumpToBookmark = (time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time
-    }
-  }
+  if (!isActive) return null
 
   return (
     <View
-      className={`fixed bottom-16 left-0 right-0 max-w-md mx-auto bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-20 transition-all duration-300 ${
-        isExpanded ? 'pb-4' : ''
+      className={`fixed left-0 bottom-0 right-0 pb-10 bg-yellow-50  dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 transition-all ${
+        expanded ? 'h-60' : 'h-32'
       }`}>
-      {/* <audio
-        ref={audioRef}
-        src={sound.uri}
-        preload='metadata'
-        loop={isLooping}
-      /> */}
+      {/* <audio ref={audioRef} src={currentLesson.audioSrc} /> */}
 
-      <View className='px-4 py-2'>
-        <View className='flex flex-row justify-between items-center mb-1'>
-          <View className='text-sm font-medium truncate max-w-[200px]'>
-            {/* {sound?.title} */} <Text>test</Text>
-          </View>
-          <Pressable
-            onPress={() => setIsExpanded(!isExpanded)}
-            className='text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-500 p-1'>
-            {isExpanded ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
-          </Pressable>
-        </View>
-
-        <View className='flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-1'>
-          <Text>{formatTime(currentTime)}</Text>
-          <Text>{formatTime(audioDuration)}</Text>
-        </View>
-
-        {/* <input
-          type='range'
-          min='0'
-          max={audioDuration || 0}
-          value={currentTime}
-          onChange={handleSeek}
-          className='w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-emerald-600 dark:accent-emerald-500'
-        /> */}
-
-        <View className='flex items-center justify-between mt-2'>
-          <View className='flex items-center'>
-            <Pressable
-              onPress={toggleMute}
-              className='p-1 text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-500'>
-              {isMuted ? (
-                <VolumeX size={18} />
-              ) : volume < 0.5 ? (
-                <Volume1 size={18} />
-              ) : (
-                <Volume2 size={18} />
-              )}
-            </Pressable>
-
-            {/* <input
-              type='range'
-              min='0'
-              max='1'
-              step='0.01'
-              value={isMuted ? 0 : volume}
-              onChange={handleVolumeChange}
-              className='w-16 h-1 ml-1 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-emerald-600 dark:accent-emerald-500'
-            /> */}
+      <View className='container mx-auto px-4 h-full flex flex-col'>
+        {/* Main player controls */}
+        <View className='flex flex-row items-center justify-between h-20'>
+          {/* Lesson info */}
+          <View className='flex-shrink-0 w-1/4 md:w-1/3'>
+            <Text className='text-sm font-medium truncate'>
+              {currentLesson.title}
+            </Text>
+            <Text className='text-xs text-stone-500 dark:text-stone-400 truncate'>
+              {currentLesson.course}
+            </Text>
           </View>
 
-          <View className='flex items-center space-x-2'>
+          {/* Controls */}
+          <View className='flex flex-row items-center gap-x-2 md:gap-x-4'>
             <Pressable
-              onPress={skipBackward}
-              className='p-1 text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-500'>
-              <SkipBack size={20} />
+              className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
+              aria-label='Skip backward'>
+              <SkipBack size={18} color='black' />
             </Pressable>
 
             <Pressable
               onPress={togglePlay}
-              className='p-2 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors'>
+              className='p-2 rounded-full bg-green-700 hover:bg-green-700/80 text-white transition-colors'
+              aria-label={isPlaying ? 'Pause' : 'Play'}>
               {isPlaying ? (
-                <Pause size={20} />
+                <Pause size={20} color='white' />
               ) : (
-                <Play size={20} className='ml-0.5' />
+                <Play size={20} color='white' />
               )}
             </Pressable>
 
             <Pressable
-              onPress={skipForward}
-              className='p-1 text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-500'>
-              <SkipForward size={20} />
+              className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
+              aria-label='Skip forward'>
+              <SkipForward size={18} color='black' />
             </Pressable>
           </View>
 
-          <View className='flex items-center space-x-2'>
+          {/* Progress and actions */}
+          <View className='hidden md:flex items-center gap-x-2 flex-1 max-w-md'>
+            <Text className='text-xs w-10 text-right'>
+              {formatTime(currentTime)}
+            </Text>
+            <Slider
+              style={{ flex: 1, height: 20 }}
+              minimumValue={0}
+              maximumValue={duration || 0}
+              value={currentTime}
+              // onValueChange={handleSeek}
+              minimumTrackTintColor='#f43f5e' // Tailwind 'bg-green-700'
+              maximumTrackTintColor='#e7e5e4' // stone-200
+              thumbTintColor='#f43f5e' // same as minimumTrack for a consistent look
+            />
+            <Text className='text-xs w-10'>{formatTime(duration)}</Text>
+          </View>
+
+          {/* Actions */}
+          <View className='flex flex-row items-center gap-x-2'>
             <Pressable
-              onPress={() =>
-                handlePlaybackRateChange(
-                  playbackRate === 2 ? 0.75 : playbackRate + 0.25
-                )
-              }
-              className='px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-700'>
-              {playbackRate}x
+              onPress={changePlaybackRate}
+              className='hidden md:block text-xs font-medium px-2 py-1 rounded hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
+              aria-label='Change playback speed'>
+              <Text className='text-xs font-medium px-2 py-1 rounded hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'>
+                {playbackRate}x
+              </Text>
             </Pressable>
 
-            {/* <a
-              href={sound?.uri}
-              download
-              className='p-1 text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-500'>
-              <Download size={18} />
-            </a> */}
+            <Pressable
+              onPress={handleDownload}
+              className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
+              aria-label='Download audio'>
+              <Download size={18} color='black' />
+            </Pressable>
+
+            <Pressable
+              onPress={toggleExpanded}
+              className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
+              aria-label={expanded ? 'Minimize player' : 'Expand player'}>
+              {expanded ? (
+                <Minimize2 size={18} color='black' />
+              ) : (
+                <Maximize2 size={18} color='black' />
+              )}
+            </Pressable>
           </View>
         </View>
 
-        {/* Expanded controls */}
-        {isExpanded && (
-          <View className='mt-4 space-y-4 animate-fadeIn'>
-            {/* Advanced controls */}
-            <View className='grid grid-cols-4 gap-2'>
-              <Pressable
-                onPress={toggleLoop}
-                className={`flex flex-col items-center justify-center p-2 rounded-lg ${
-                  isLooping
-                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                }`}>
-                <Repeat size={18} />
-                <Text className='text-xs mt-1'>Loop</Text>
-              </Pressable>
+        {/* Mobile progress bar (always visible) */}
+        <View className='md:hidden mt-2 pb-4 px-2'>
+          <View className='flex flex-row items-center gap-x-2'>
+            <Text className='text-xs'>{formatTime(currentTime)}</Text>
+            <Slider
+              style={{ flex: 1, height: 20 }}
+              minimumValue={0}
+              maximumValue={duration || 0}
+              value={currentTime}
+              // onValueChange={handleSeek}
+              minimumTrackTintColor='#f43f5e' // bg-green-700
+              maximumTrackTintColor='#e7e5e4' // bg-stone-200
+              thumbTintColor='#f43f5e' // styled like Tailwind thumb
+            />
+            <Text className='text-xs'>{formatTime(duration)}</Text>
+          </View>
+        </View>
 
-              <Pressable
-                onPress={addBookmark}
-                className='flex flex-col items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'>
-                <Bookmark size={18} />
-                <Text className='text-xs mt-1'>Bookmark</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  const audio = audioRef.current
-                  if (audio) audio.currentTime = 0
-                }}
-                className='flex flex-col items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'>
-                <RotateCcw size={18} />
-                <Text className='text-xs mt-1'>Restart</Text>
-              </Pressable>
-            </View>
-
-            {/* Playback speed options */}
-            <View>
-              <View className='text-xs font-medium text-gray-600 dark:text-gray-400 mb-2'>
-                Playback Speed
+        {/* Expanded view */}
+        {expanded && (
+          <View className='flex flex-1 flex-row pt-2'>
+            <View className='flex flex-col items-center gap-y-4 w-full'>
+              <View className='flex flex-row items-center gap-x-2'>
+                <Volume2 size={16} color='black' />
+                <Slider
+                  style={{ width: 100, height: 20 }}
+                  minimumValue={0}
+                  maximumValue={1}
+                  step={0.01}
+                  value={volume}
+                  // onValueChange={handleVolumeChange}
+                  minimumTrackTintColor='#f43f5e' // Tailwind "bg-green-700" equivalent
+                  maximumTrackTintColor='#e7e5e4' // stone-200
+                  thumbTintColor='#f43f5e' // same as minimumTrack for consistency
+                />
               </View>
-              <View className='flex space-x-2'>
-                {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
-                  <Pressable
-                    key={rate}
-                    onPress={() => handlePlaybackRateChange(rate)}
-                    className={`px-2 py-1 rounded text-xs font-medium ${
-                      playbackRate === rate
-                        ? 'bg-emerald-600 dark:bg-emerald-500 text-white'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                    }`}>
-                    {rate}x
-                  </Pressable>
-                ))}
-              </View>
-            </View>
 
-            {/* Bookmarks */}
-            {bookmarks.length > 0 && (
-              <View>
-                <View className='flex items-center justify-between'>
-                  <View className='text-xs font-medium text-gray-600 dark:text-gray-400 mb-2'>
-                    Bookmarks
-                  </View>
-                  <Pressable
-                    onPress={() => setBookmarks([])}
-                    className='text-xs text-gray-500 dark:text-gray-400'>
-                    Clear all
-                  </Pressable>
-                </View>
-                <View className='flex flex-wrap gap-2'>
-                  {bookmarks.map((time, index) => (
+              <View className='flex flex-row items-center gap-x-2'>
+                <Text className='text-sm'>Playback Speed:</Text>
+                <View className='flex flex-row gap-x-2'>
+                  {[0.75, 1, 1.5, 2].map(rate => (
                     <Pressable
-                      key={index}
-                      onPress={() => jumpToBookmark(time)}
-                      className='px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded text-xs flex items-center gap-1'>
-                      <Bookmark size={12} />
-                      {formatTime(time)}
+                      key={rate}
+                      onPress={() => setPlaybackRate(rate)}
+                      className={`px-2 py-1 text-xs rounded ${
+                        playbackRate === rate
+                          ? 'bg-green-700 text-white'
+                          : 'bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600'
+                      }`}>
+                      <Text>{rate}x</Text>
                     </Pressable>
                   ))}
                 </View>
               </View>
-            )}
-
-            {/* Jump controls */}
-            <View className='grid grid-cols-5 gap-2'>
-              <Pressable
-                onPress={() => {
-                  const audio = audioRef.current
-                  if (audio)
-                    audio.currentTime = Math.max(0, audio.currentTime - 30)
-                }}
-                className='flex flex-col items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'>
-                <Text className='text-xs font-medium'>-30s</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  const audio = audioRef.current
-                  if (audio)
-                    audio.currentTime = Math.max(0, audio.currentTime - 15)
-                }}
-                className='flex flex-col items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'>
-                <Text className='text-xs font-medium'>-15s</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  const audio = audioRef.current
-                  if (audio)
-                    audio.currentTime = Math.max(0, audio.currentTime - 5)
-                }}
-                className='flex flex-col items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'>
-                <Text className='text-xs font-medium'>-5s</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  const audio = audioRef.current
-                  if (audio)
-                    audio.currentTime = Math.min(
-                      audio.duration,
-                      audio.currentTime + 5
-                    )
-                }}
-                className='flex flex-col items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'>
-                <Text className='text-xs font-medium'>+5s</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  const audio = audioRef.current
-                  if (audio)
-                    audio.currentTime = Math.min(
-                      audio.duration,
-                      audio.currentTime + 15
-                    )
-                }}
-                className='flex flex-col items-center justify-center p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'>
-                <Text className='text-xs font-medium'>+15s</Text>
-              </Pressable>
             </View>
           </View>
         )}
