@@ -7,9 +7,8 @@ import axios from 'axios'
 import CategoryList from '@/components/category-list'
 import CourseCard from '@/components/course-card'
 import Header from '@/components/header'
-import LoadingSpinner from '@/components/loading-spinner'
 
-export default function HomePage() {
+export default function Courses() {
   const [categories, setCategories] = useState<
     {
       id: number
@@ -49,7 +48,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <SafeAreaView className='flex-1 items-center justify-center bg-white p-4'>
-        <LoadingSpinner />
+        {/* <LoadingSpinner /> */}
         <StatusBar barStyle='dark-content' backgroundColor='#059669' />
       </SafeAreaView>
     )
@@ -72,26 +71,6 @@ export default function HomePage() {
         <Header />
         <ScrollView showsVerticalScrollIndicator={false}>
           <View className='p-6'>
-            <View className='mb-8'>
-              <Text className='text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 text-right dir-rtl'>
-                موضوعات دروس
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className='flex flex-row mr-2 flex-1 pb-2 scrollbar-hide text-right dir-rtl'>
-                {categories
-                  .filter(category => category.parent === 0)
-                  .map(category => (
-                    <CategoryList
-                      key={category.id}
-                      href={`/categories/${category.id}` as Href}
-                      category={category}
-                    />
-                  ))}
-              </ScrollView>
-            </View>
-
             <View className='mb-8'>
               <Text className='text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 text-right dir-rtl'>
                 تمام دروس خارج

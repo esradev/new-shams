@@ -1,5 +1,13 @@
 import { Tabs } from 'expo-router'
-import { Home, Calendar, Bell, Settings } from 'lucide-react-native'
+import {
+  Home,
+  Calendar,
+  Bell,
+  Settings,
+  List,
+  Book,
+  BookOpen
+} from 'lucide-react-native'
 
 export default function TabLayout() {
   return (
@@ -11,35 +19,35 @@ export default function TabLayout() {
       <Tabs.Screen
         name='index'
         options={{
-          title: 'Home',
+          title: 'صفحه اصلی',
           tabBarIcon: ({ color, focused }) => <Home color={color} size={24} />
         }}
       />
-      {/* <Tabs.Screen
+      <Tabs.Screen
         name='courses'
         options={{
-          title: 'Courses',
+          title: 'دروس',
           tabBarIcon: ({ color, focused }) => (
-            <Calendar color={color} size={24} />
+            <BookOpen color={color} size={24} />
           )
         }}
       />
       <Tabs.Screen
         name='alerts'
         options={{
-          title: 'Alerts',
+          title: 'اعلانات',
           tabBarIcon: ({ color, focused }) => <Bell color={color} size={24} />
         }}
       />
       <Tabs.Screen
         name='settings'
         options={{
-          title: 'Settings',
+          title: 'تنظیمات',
           tabBarIcon: ({ color, focused }) => (
             <Settings color={color} size={24} />
           )
         }}
-      /> */}
+      />
     </Tabs>
   )
 }

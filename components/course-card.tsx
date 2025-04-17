@@ -15,14 +15,6 @@ export default function CourseCard({ href, course }: CourseProps) {
   return (
     <Link href={href} asChild>
       <Pressable className='flex flw-row flex-1 w-full items-start gap-3 p-3 rounded-lg border bg-white border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'>
-        {/* <View className='relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0'> */}
-        {/* <Image
-            // src={course.image || '/placeholder.svg'}
-            alt={name}
-            className='object-cover'
-          /> */}
-        {/* </View> */}
-
         <View className='flex flex-col flex-1 w-full'>
           <Text className='font-medium text-xl text-gray-900 dark:text-white mb-1 line-clamp-2 text-right dir-rtl'>
             {course.name}
@@ -55,16 +47,6 @@ export default function CourseCard({ href, course }: CourseProps) {
               </Text>
             </View>
           </View>
-
-          {/* {course.progress > 0 && (
-            <View className='mt-2'>
-              <View className='w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden'>
-                <View
-                  className='h-full bg-emerald-600 dark:bg-emerald-500 rounded-full'
-                  style={{ width: `${course.progress}%` }}></View>
-              </View>
-            </View>
-          )} */}
         </View>
       </Pressable>
     </Link>
