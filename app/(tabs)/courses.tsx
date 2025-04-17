@@ -4,9 +4,9 @@ import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
 import { Href } from 'expo-router'
 import axios from 'axios'
 
-import CategoryList from '@/components/category-list'
 import CourseCard from '@/components/course-card'
 import Header from '@/components/header'
+import LoadingSpinner from '@/components/loading-spinner'
 
 export default function Courses() {
   const [categories, setCategories] = useState<
@@ -45,15 +45,6 @@ export default function Courses() {
     fetchCategories()
   }, [])
 
-  if (loading) {
-    return (
-      <SafeAreaView className='flex-1 items-center justify-center bg-white p-4'>
-        {/* <LoadingSpinner /> */}
-        <StatusBar barStyle='dark-content' backgroundColor='#059669' />
-      </SafeAreaView>
-    )
-  }
-
   if (error) {
     return (
       <SafeAreaView className='flex-1 items-center justify-center bg-white p-4'>
@@ -69,26 +60,30 @@ export default function Courses() {
     <SafeAreaProvider>
       <SafeAreaView className='flex flex-1 bg-white dark:bg-gray-900'>
         <Header />
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View className='p-6'>
-            <View className='mb-8'>
-              <Text className='text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 text-right dir-rtl'>
-                تمام دروس خارج
-              </Text>
-              <View className='grid grid-cols-1 gap-4'>
-                {categories
-                  .filter(category => category.parent !== 0)
-                  .map(category => (
-                    <CourseCard
-                      key={category.id}
-                      href={`/courses/${category.id}` as Href}
-                      course={category}
-                    />
-                  ))}
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View className='p-6'>
+              <View className='mb-8'>
+                <Text className='text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 text-right dir-rtl'>
+                  تمام دروس خارج
+                </Text>
+                <View className='grid grid-cols-1 gap-4'>
+                  {categories
+                    .filter(category => category.parent !== 0)
+                    .map(category => (
+                      <CourseCard
+                        key={category.id}
+                        href={`/courses/${category.id}` as Href}
+                        course={category}
+                      />
+                    ))}
+                </View>
               </View>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        )}
         <StatusBar barStyle='dark-content' backgroundColor='#059669' />
       </SafeAreaView>
     </SafeAreaProvider>

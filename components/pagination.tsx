@@ -1,122 +1,66 @@
-import { Text, TouchableOpacity, View } from 'react-native'
+import { ChevronLeft, ChevronRight } from 'lucide-react-native'
+import React from 'react'
+import { View, Text, Pressable } from 'react-native'
 
-const Pagination = ({
-  page,
-  setPage,
-  totalPages
-}: {
+interface PaginationProps {
   page: number
-  setPage: (page: number) => void
   totalPages: number
+  setPage: (page: number) => void
+}
+
+const Pagination: React.FC<PaginationProps> = ({
+  page,
+  totalPages,
+  setPage
 }) => {
-  const links = []
-  const ellipsis = (
-    <Text className='relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0'>
-      ...
-    </Text>
-  )
-
-  // Always show first page
-  if (page !== 1) {
-    links.push(
-      <TouchableOpacity
-        key={1}
-        className='rounded-sm'
-        onPress={() => setPage(1)}>
-        <Text
-          className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-semibold ${
-            page === 1
-              ? 'bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
-          }`}>
-          1
-        </Text>
-      </TouchableOpacity>
-    )
-  }
-
-  // Add ellipsis if current page is beyond page 3
-  if (page > 4) {
-    links.push(ellipsis)
-  }
-
-  // Show the 2 pages before the current page (if applicable)
-  if (page > 2) {
-    links.push(
-      <TouchableOpacity
-        key={page - 1}
-        className='rounded-sm'
-        onPress={() => setPage(page - 1)}>
-        <Text
-          className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-semibold ${
-            page === page - 1
-              ? 'bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-              : ' text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
-          }`}>
-          {page - 1}
-        </Text>
-      </TouchableOpacity>
-    )
-  }
-
-  // Show the current page
-  links.push(
-    <TouchableOpacity
-      key={page}
-      className='rounded-sm'
-      onPress={() => setPage(page)}>
-      <Text className='relative z-10 inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 bg-indigo-600 text-white'>
-        {page}
-      </Text>
-    </TouchableOpacity>
-  )
-
-  // Show the 2 pages after the current page (if applicable)
-  if (page < totalPages - 1) {
-    links.push(
-      <TouchableOpacity
-        key={page + 1}
-        className='rounded-sm'
-        onPress={() => setPage(page + 1)}>
-        <Text
-          className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-semibold ${
-            page === page + 1
-              ? 'bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
-          }`}>
-          {page + 1}
-        </Text>
-      </TouchableOpacity>
-    )
-  }
-
-  // Add ellipsis if current page is more than 3 pages away from the last page
-  if (page < totalPages - 2) {
-    links.push(ellipsis)
-  }
-
-  // Always show last page
-  if (page !== totalPages) {
-    links.push(
-      <TouchableOpacity
-        key={totalPages}
-        className='rounded-sm'
-        onPress={() => setPage(totalPages)}>
-        <Text
-          className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-semibold ${
-            page === totalPages
-              ? 'bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
-          }`}>
-          {totalPages}
-        </Text>
-      </TouchableOpacity>
-    )
-  }
+  const canGoBack = page > 1
+  const canGoForward = page < totalPages
 
   return (
-    <View className='isolate inline-flex rounded-md shadow-sm flex-row border border-gray-300 mb-6 divide-gray-300 divide-x'>
-      {links}
+    <View className='flex flex-row-reverse justify-center items-center gap-x-4 py-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700'>
+      <Pressable
+        className={`px-4 py-1 rounded-md border ${
+          canGoBack
+            ? 'bg-emerald-600 border-emerald-700'
+            : 'bg-gray-200 dark:bg-gray-800 border-gray-300 dark:border-gray-700'
+        }`}
+        onPress={() => canGoBack && setPage(page - 1)}
+        disabled={!canGoBack}>
+        <View className='flex flex-row items-center gap-x-2'>
+          <Text
+            className={`text-sm font-medium  ${
+              canGoBack
+                ? 'opacity-100 text-white'
+                : 'opacity-40 text-gray-700 dark:text-gray-300'
+            }`}>
+            قبلی
+          </Text>
+          <ChevronRight size={12} color={canGoBack ? 'white' : 'gray'} />
+        </View>
+      </Pressable>
+
+      <Text className='text-gray-700 dark:text-gray-300 text-sm font-medium'>
+        صفحه {page} از {totalPages}
+      </Text>
+
+      <Pressable
+        className={`px-4 py-1 rounded-md border ${
+          canGoForward
+            ? 'bg-emerald-600 border-emerald-700'
+            : 'bg-gray-200 dark:bg-gray-800 border-gray-300 dark:border-gray-700'
+        }`}
+        onPress={() => canGoForward && setPage(page + 1)}
+        disabled={!canGoForward}>
+        <View className='flex flex-row items-center gap-x-2'>
+          <ChevronLeft size={12} color={canGoForward ? 'white' : 'gray'} />
+          <Text
+            className={`text-sm font-medium text-white ${
+              canGoForward ? 'opacity-100' : 'opacity-40'
+            }`}>
+            بعدی
+          </Text>
+        </View>
+      </Pressable>
     </View>
   )
 }

@@ -46,15 +46,6 @@ export default function HomePage() {
     fetchCategories()
   }, [])
 
-  if (loading) {
-    return (
-      <SafeAreaView className='flex-1 items-center justify-center bg-white p-4'>
-        <LoadingSpinner />
-        <StatusBar barStyle='dark-content' backgroundColor='#059669' />
-      </SafeAreaView>
-    )
-  }
-
   if (error) {
     return (
       <SafeAreaView className='flex-1 items-center justify-center bg-white p-4'>
@@ -70,46 +61,50 @@ export default function HomePage() {
     <SafeAreaProvider>
       <SafeAreaView className='flex flex-1 bg-white dark:bg-gray-900'>
         <Header />
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View className='p-6'>
-            <View className='mb-8'>
-              <Text className='text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 text-right dir-rtl'>
-                موضوعات دروس
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className='flex flex-row mr-2 flex-1 pb-2 scrollbar-hide text-right dir-rtl'>
-                {categories
-                  .filter(category => category.parent === 0)
-                  .map(category => (
-                    <CategoryList
-                      key={category.id}
-                      href={`/categories/${category.id}` as Href}
-                      category={category}
-                    />
-                  ))}
-              </ScrollView>
-            </View>
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View className='p-6'>
+              <View className='mb-8'>
+                <Text className='text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 text-right dir-rtl'>
+                  موضوعات دروس
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  className='flex flex-row mr-2 flex-1 pb-2 scrollbar-hide text-right dir-rtl'>
+                  {categories
+                    .filter(category => category.parent === 0)
+                    .map(category => (
+                      <CategoryList
+                        key={category.id}
+                        href={`/categories/${category.id}` as Href}
+                        category={category}
+                      />
+                    ))}
+                </ScrollView>
+              </View>
 
-            <View className='mb-8'>
-              <Text className='text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 text-right dir-rtl'>
-                تمام دروس خارج
-              </Text>
-              <View className='grid grid-cols-1 gap-4'>
-                {categories
-                  .filter(category => category.parent !== 0)
-                  .map(category => (
-                    <CourseCard
-                      key={category.id}
-                      href={`/courses/${category.id}` as Href}
-                      course={category}
-                    />
-                  ))}
+              <View className='mb-8'>
+                <Text className='text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 text-right dir-rtl'>
+                  تمام دروس خارج
+                </Text>
+                <View className='grid grid-cols-1 gap-4'>
+                  {categories
+                    .filter(category => category.parent !== 0)
+                    .map(category => (
+                      <CourseCard
+                        key={category.id}
+                        href={`/courses/${category.id}` as Href}
+                        course={category}
+                      />
+                    ))}
+                </View>
               </View>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        )}
         <StatusBar barStyle='dark-content' backgroundColor='#059669' />
       </SafeAreaView>
     </SafeAreaProvider>
