@@ -1,19 +1,16 @@
 import { Tabs } from 'expo-router'
-import {
-  Home,
-  Calendar,
-  Bell,
-  Settings,
-  List,
-  Book,
-  BookOpen
-} from 'lucide-react-native'
+import { colorScheme } from 'nativewind'
+
+import { Home, Bell, Settings, BookOpen } from 'lucide-react-native'
 
 export default function TabLayout() {
+  const bgColor = colorScheme.get() === 'dark' ? '#000' : '#fff'
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#059669',
+        tabBarInactiveTintColor: '#333',
         headerShown: false
       }}>
       <Tabs.Screen

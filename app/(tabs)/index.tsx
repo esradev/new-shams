@@ -68,7 +68,7 @@ export default function HomePage() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView className='flex flex-1'>
+      <SafeAreaView className='flex flex-1 bg-white dark:bg-gray-900'>
         <Header />
         <ScrollView showsVerticalScrollIndicator={false}>
           <View className='p-6'>

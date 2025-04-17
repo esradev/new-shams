@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { View, Text, Pressable } from 'react-native'
-import { Link, usePathname } from 'expo-router'
+import { Href, Link, usePathname } from 'expo-router'
 import { colorScheme, useColorScheme } from 'nativewind'
 
 import { Moon, Sun, Menu, X, Settings } from 'lucide-react-native'
@@ -11,11 +11,6 @@ export default function Header() {
   const { setColorScheme } = useColorScheme()
 
   const pathname = usePathname()
-
-  useEffect(() => {
-    setColorScheme('light')
-    setDarkMode(false)
-  }, [])
 
   const toggleDarkMode = () => {
     if (darkMode) {
@@ -37,7 +32,7 @@ export default function Header() {
   ]
 
   return (
-    <View className='sticky top-0 z-50 bg-white dark:bg-stone-900 shadow-sm'>
+    <View className='sticky top-0 z-50 bg-green-100 dark:bg-stone-900 shadow-sm'>
       <View className='container mx-auto px-6'>
         <View className='flex flex-row-reverse w-full items-center justify-between h-16'>
           {/* Logo */}
@@ -59,16 +54,25 @@ export default function Header() {
               className='p-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors'
               aria-label='Toggle dark mode'>
               {darkMode ? (
-                <Sun size={20} color={darkMode ? 'white' : 'black'} />
+                <Sun
+                  size={20}
+                  color={colorScheme.get() === 'dark' ? 'white' : 'black'}
+                />
               ) : (
-                <Moon size={20} color={darkMode ? 'white' : 'black'} />
+                <Moon
+                  size={20}
+                  color={colorScheme.get() === 'dark' ? 'white' : 'black'}
+                />
               )}
             </Pressable>
 
             <Link
               href='/settings'
               className='items-center p-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors'>
-              <Settings size={20} color={darkMode ? 'white' : 'black'} />
+              <Settings
+                size={20}
+                color={colorScheme.get() === 'dark' ? 'white' : 'black'}
+              />
             </Link>
 
             {/* Mobile menu Pressable - hide on md and larger screens */}
@@ -77,9 +81,15 @@ export default function Header() {
               onPress={toggleMenu}
               aria-label='Toggle menu'>
               {isMenuOpen ? (
-                <X size={20} color={darkMode ? 'white' : 'black'} />
+                <X
+                  size={20}
+                  color={colorScheme.get() === 'dark' ? 'white' : 'black'}
+                />
               ) : (
-                <Menu size={20} color={darkMode ? 'white' : 'black'} />
+                <Menu
+                  size={20}
+                  color={colorScheme.get() === 'dark' ? 'white' : 'black'}
+                />
               )}
             </Pressable>
           </View>
@@ -92,12 +102,13 @@ export default function Header() {
               {navLinks.map(link => (
                 <Link
                   key={link.name}
-                  href={link.path}
-                  className={`transition-colors hover:text-primary px-2 py-1 text-right dir-rtl ${
+                  href={link.path as Href}
+                  className={`transition-colors hover:text-primary px-2 py-1 text-right dir-rtl dark:text-white ${
                     pathname === link.path ? 'text-primary font-medium' : ''
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}>
-                  {link.name}
+                  }`}>
+                  <Pressable onPress={() => setIsMenuOpen(false)}>
+                    <Text className='dark:text-white'>{link.name}</Text>
+                  </Pressable>
                 </Link>
               ))}
             </View>

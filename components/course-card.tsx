@@ -1,4 +1,5 @@
 import { Link, Href } from 'expo-router'
+import { BarChart, BookOpen, Clock } from 'lucide-react-native'
 import { Image, View, Text, Pressable } from 'react-native'
 
 interface CourseProps {
@@ -14,7 +15,7 @@ interface CourseProps {
 export default function CourseCard({ href, course }: CourseProps) {
   return (
     <Link href={href} asChild>
-      <Pressable className='flex flw-row flex-1 w-full items-start gap-3 p-3 rounded-lg border bg-white border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'>
+      <Pressable className='flex flw-row flex-1 w-full items-start gap-3 p-3 rounded-lg border bg-white border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 dark:bg-gray-700'>
         <View className='flex flex-col flex-1 w-full'>
           <Text className='font-medium text-xl text-gray-900 dark:text-white mb-1 line-clamp-2 text-right dir-rtl'>
             {course.name}
@@ -34,17 +35,22 @@ export default function CourseCard({ href, course }: CourseProps) {
           </View>
 
           <View className='flex flex-row items-center justify-between'>
-            <Text className='text-xs text-emerald-700 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full'>
-              درس خارج
-            </Text>
+            <View className='flex flex-row items-center gap-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-full px-2 py-0.5'>
+              <Text className='text-xs text-emerald-700 dark:text-emerald-400 font-medium'>
+                درس خارج
+              </Text>
+              <BarChart size={12} color='gray' />
+            </View>
 
             <View className='flex flex-row items-center gap-2'>
               <Text className='text-xs text-gray-500 dark:text-gray-400 text-right dir-rtl'>
                 {course.count} جلسه
               </Text>
+              <BookOpen size={12} color='gray' />
               <Text className='text-xs text-gray-500 dark:text-gray-400 text-right dir-rtl'>
                 {(course.count ^ 2) / 2} ساعت
               </Text>
+              <Clock size={12} color='gray' />
             </View>
           </View>
         </View>

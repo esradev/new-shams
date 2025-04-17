@@ -96,7 +96,7 @@ const CategoryPosts = () => {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView className='flex flex-1'>
+      <SafeAreaView className='flex flex-1 bg-white dark:bg-gray-900'>
         <Header />
         <ScrollView>
           <View className='px-4 py-5'>
@@ -148,7 +148,7 @@ const CategoryPosts = () => {
                     asChild
                     href={`/lessons/${lesson.id}`}
                     key={lesson.id}
-                    className='flex flex-row-reverse items-center p-3 rounded-lg bg-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'>
+                    className='flex flex-row-reverse items-center p-3 rounded-lg bg-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 dark:bg-gray-700 '>
                     <Pressable className='flex flex-row-reverse items-center w-full'>
                       <View className='flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 ml-3 text-sm font-medium'>
                         <Text>{index + 1}</Text>

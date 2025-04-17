@@ -3,16 +3,15 @@ import { Link } from 'expo-router'
 import { View, Text, StatusBar, ScrollView } from 'react-native'
 import { ArrowLeft } from 'lucide-react-native'
 import axios from 'axios'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import RenderHTML from 'react-native-render-html'
 import LoadingSpinner from '@/components/loading-spinner'
 import { Audio } from 'expo-av'
 import { Href, useLocalSearchParams, useNavigation } from 'expo-router'
-import MaterialIcons from '@expo/vector-icons/MaterialIcons'
-import Slider from '@react-native-community/slider'
-import * as FileSystem from 'expo-file-system'
+import Header from '@/components/header'
 
 import AudioPlayer from '@/components/audio-player'
+import { colorScheme } from 'nativewind'
 // import NoteSection from '@/components/note-section'
 
 interface ErrorType {
@@ -124,56 +123,59 @@ export default function LessonPage() {
   }
 
   return (
-    <SafeAreaView className='flex h-full bg-white dark:bg-gray-900'>
-      <ScrollView className='flex h-full bg-white dark:bg-gray-900'>
-        <View className='sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800'>
-          <View className='px-4 py-3 flex items-center'>
-            <Link href={`/courses/${id}`} className='mr-2'>
-              <ArrowLeft
-                size={20}
-                className='text-gray-600 dark:text-gray-400'
-              />
-            </Link>
-            <View>
-              <Text className='text-lg font-semibold text-gray-900 dark:text-white'>
-                {post.title.rendered}
-              </Text>
-              <Text className='text-xs text-gray-500 dark:text-gray-400'>
-                {/* {post.courseName} */}
-              </Text>
+    <SafeAreaProvider>
+      <SafeAreaView className='flex flex-1 bg-white dark:bg-gray-900'>
+        <Header />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View className='sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800'>
+            <View className='px-4 py-3 flex items-center'>
+              <Link href={`/courses/${id}`} className='mr-2'>
+                <ArrowLeft
+                  size={20}
+                  className='text-gray-600 dark:text-gray-400'
+                />
+              </Link>
+              <View>
+                <Text className='text-lg font-semibold text-gray-900 dark:text-white'>
+                  {post.title.rendered}
+                </Text>
+                <Text className='text-xs text-gray-500 dark:text-gray-400'>
+                  {/* {post.courseName} */}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        <View className='px-4 py-6'>
-          <RenderHTML
-            contentWidth={400} // Adjust contentWidth based on your layout
-            source={{
-              html:
-                post?.content.rendered ||
-                `<h2>متأسفانه هنوز متن این جلسه کامل نشده است.</h2>`
-            }}
-            baseStyle={{
-              fontSize: 18,
-              lineHeight: 26,
-              color: '#333',
-              textAlign: 'right'
-            }}
-          />
+          <View className='px-4 py-6'>
+            <RenderHTML
+              contentWidth={400} // Adjust contentWidth based on your layout
+              source={{
+                html:
+                  post?.content.rendered ||
+                  `<h2>متأسفانه هنوز متن این جلسه کامل نشده است.</h2>`
+              }}
+              baseStyle={{
+                fontSize: 18,
+                lineHeight: 26,
+                color: colorScheme.get() === 'dark' ? '#d6d3d1' : '#44403c',
+                textAlign: 'right'
+              }}
+            />
 
-          {/* <View className='mt-12'>
+            {/* <View className='mt-12'>
           <NoteSection postId={post.id} />
           </View> */}
-        </View>
-      </ScrollView>
-      {post?.meta['the-audio-of-the-lesson'] && (
-        <AudioPlayer
-        // sound={sound}
-        // title={post.title.rendered}
-        // duration={post.duration}
-        />
-      )}
-    </SafeAreaView>
+          </View>
+        </ScrollView>
+        {post?.meta['the-audio-of-the-lesson'] && (
+          <AudioPlayer
+          // sound={sound}
+          // title={post.title.rendered}
+          // duration={post.duration}
+          />
+        )}
+      </SafeAreaView>
+    </SafeAreaProvider>
   )
 }
 // const PostDetail = () => {
