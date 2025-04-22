@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'expo-router'
-import { View, Text, StatusBar, ScrollView } from 'react-native'
-import { ArrowLeft, BarChart, BookOpen, Calendar } from 'lucide-react-native'
+import { View, Text, ScrollView } from 'react-native'
+import { ArrowLeft, BookOpen, Calendar } from 'lucide-react-native'
 import axios from 'axios'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import RenderHTML from 'react-native-render-html'
-import LoadingSpinner from '@/components/loading-spinner'
 import { Audio } from 'expo-av'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
-import Header from '@/components/header'
 
 import AudioPlayer from '@/components/audio-player'
 import { colorScheme } from 'nativewind'
@@ -110,7 +108,6 @@ export default function LessonPage() {
           }}>
           Error: {error?.message}
         </Text>
-        <StatusBar barStyle='dark-content' backgroundColor='#16a34a' />
       </SafeAreaView>
     )
   }
@@ -118,7 +115,6 @@ export default function LessonPage() {
   return (
     <SafeAreaProvider>
       <SafeAreaView className='flex flex-1 bg-white dark:bg-gray-900'>
-        <Header />
         <ScrollView
           showsVerticalScrollIndicator={false}
           className='flex flex-1 p-4 bg-stone-200 dark:bg-gray-900'>
@@ -353,7 +349,6 @@ export default function LessonPage() {
 //           </View>
 //         </View>
 //       )}
-//       <StatusBar barStyle='dark-content' backgroundColor='#16a34a' />
 //     </SafeAreaView>
 //   )
 // }

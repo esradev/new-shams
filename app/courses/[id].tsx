@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Text, StatusBar, ScrollView, View, Pressable } from 'react-native'
+import { Text, ScrollView, View, Pressable } from 'react-native'
 import { useLocalSearchParams, useNavigation, Link } from 'expo-router'
 import axios from 'axios'
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
@@ -7,7 +7,6 @@ import { ChevronLeft } from 'lucide-react-native'
 
 import Pagination from '@/components/pagination'
 import LoadingSpinner from '@/components/loading-spinner'
-import Header from '@/components/header'
 
 interface ErrorType {
   message: string
@@ -80,7 +79,6 @@ const CategoryPosts = () => {
         <Text className='text-red-500 text-lg font-bold text-center mb-4 w-full'>
           Error: {error?.message}
         </Text>
-        <StatusBar barStyle='dark-content' backgroundColor='#16a34a' />
       </SafeAreaView>
     )
   }
@@ -88,7 +86,6 @@ const CategoryPosts = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView className='flex flex-1 bg-white dark:bg-gray-900'>
-        <Header />
         <ScrollView>
           {loading ? (
             <LoadingSpinner />

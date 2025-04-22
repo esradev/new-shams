@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Text, StatusBar, ScrollView, View, Pressable } from 'react-native'
+import { Text, ScrollView, View, Pressable } from 'react-native'
 import { useLocalSearchParams, useNavigation, Link } from 'expo-router'
 import axios from 'axios'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -76,7 +76,6 @@ const Categories = () => {
     return (
       <SafeAreaView className='flex-1 items-center justify-center bg-white'>
         <LoadingSpinner />
-        <StatusBar barStyle='dark-content' backgroundColor='#16a34a' />
       </SafeAreaView>
     )
   }
@@ -87,7 +86,6 @@ const Categories = () => {
         <Text className='text-red-500 text-lg font-bold text-center mb-4 w-full'>
           Error: {error?.message}
         </Text>
-        <StatusBar barStyle='dark-content' backgroundColor='#16a34a' />
       </SafeAreaView>
     )
   }

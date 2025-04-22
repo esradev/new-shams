@@ -5,7 +5,6 @@ import { Href } from 'expo-router'
 import axios from 'axios'
 
 import CourseCard from '@/components/course-card'
-import Header from '@/components/header'
 import LoadingSpinner from '@/components/loading-spinner'
 
 export default function Courses() {
@@ -59,7 +58,6 @@ export default function Courses() {
   return (
     <SafeAreaProvider>
       <SafeAreaView className='flex flex-1 bg-white dark:bg-gray-900'>
-        <Header />
         {loading ? (
           <LoadingSpinner />
         ) : (
@@ -84,7 +82,6 @@ export default function Courses() {
             </View>
           </ScrollView>
         )}
-        <StatusBar barStyle='dark-content' backgroundColor='#059669' />
       </SafeAreaView>
     </SafeAreaProvider>
   )

@@ -1,46 +1,41 @@
+import React from 'react'
 import { Tabs } from 'expo-router'
-import { Home, Bell, Settings, BookOpen } from 'lucide-react-native'
+import TabBar from '@/components/TabBar'
+import Header from '@/components/header'
 
-export default function TabLayout() {
+const _layout = () => {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: '#059669',
-        tabBarInactiveTintColor: '#333',
-        headerShown: false
-      }}>
+    <Tabs tabBar={props => <TabBar {...props} />}>
       <Tabs.Screen
         name='index'
         options={{
-          title: 'صفحه اصلی',
-          tabBarIcon: ({ color, focused }) => <Home color={color} size={24} />
+          title: 'خانه',
+          header: () => <Header />
         }}
       />
       <Tabs.Screen
         name='courses'
         options={{
           title: 'دروس',
-          tabBarIcon: ({ color, focused }) => (
-            <BookOpen color={color} size={24} />
-          )
+          header: () => <Header />
         }}
       />
       <Tabs.Screen
-        name='alerts'
+        name='search'
         options={{
-          title: 'اعلانات',
-          tabBarIcon: ({ color, focused }) => <Bell color={color} size={24} />
+          title: 'جستجو',
+          header: () => <Header />
         }}
       />
       <Tabs.Screen
         name='settings'
         options={{
           title: 'تنظیمات',
-          tabBarIcon: ({ color, focused }) => (
-            <Settings color={color} size={24} />
-          )
+          header: () => <Header />
         }}
       />
     </Tabs>
   )
 }
+
+export default _layout

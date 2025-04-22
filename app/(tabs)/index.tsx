@@ -3,13 +3,14 @@ import { View, Text, ScrollView, StatusBar } from 'react-native'
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
 import { Href } from 'expo-router'
 import axios from 'axios'
+import { useColorScheme } from 'nativewind'
 
 import CategoryList from '@/components/category-list'
 import CourseCard from '@/components/course-card'
-import Header from '@/components/header'
 import LoadingSpinner from '@/components/loading-spinner'
 
 export default function HomePage() {
+  const { colorScheme } = useColorScheme()
   const [categories, setCategories] = useState<
     {
       id: number
@@ -60,7 +61,6 @@ export default function HomePage() {
   return (
     <SafeAreaProvider>
       <SafeAreaView className='flex flex-1 bg-white dark:bg-gray-900'>
-        <Header />
         {loading ? (
           <LoadingSpinner />
         ) : (
@@ -105,7 +105,10 @@ export default function HomePage() {
             </View>
           </ScrollView>
         )}
-        <StatusBar barStyle='dark-content' backgroundColor='#059669' />
+        <StatusBar
+          barStyle={colorScheme == 'dark' ? 'light-content' : 'dark-content'}
+          backgroundColor={colorScheme == 'dark' ? '#1C1917' : '#F0FDF4'}
+        />
       </SafeAreaView>
     </SafeAreaProvider>
   )
