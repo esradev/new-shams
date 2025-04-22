@@ -1,6 +1,13 @@
 import type React from 'react'
-import { View, Pressable, Text } from 'react-native'
+import {
+  View,
+  Pressable,
+  Text,
+  Alert,
+  GestureResponderEvent
+} from 'react-native'
 import Slider from '@react-native-community/slider'
+import * as FileSystem from 'expo-file-system'
 
 import { useState, useRef, useEffect } from 'react'
 import {
@@ -14,159 +21,256 @@ import {
   Maximize2
 } from 'lucide-react-native'
 
-export default function AudioPlayer() {
+export default function AudioPlayer({
+  id,
+  post,
+  sound,
+  duration,
+  currentTime
+}: any) {
+  const [fileUri, setFileUri] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [duration, setDuration] = useState(0)
-  const [currentTime, setCurrentTime] = useState(0)
   const [volume, setVolume] = useState(0.7)
   const [expanded, setExpanded] = useState(false)
   const [playbackRate, setPlaybackRate] = useState(1)
   const [isActive, setIsActive] = useState(false)
-  const [currentLesson, setCurrentLesson] = useState({
-    title: 'Introduction to Quranic Tajweed',
-    course: 'Quranic Studies',
-    audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
-  })
-
-  const audioRef = useRef<HTMLAudioElement>(null)
+  // const [post, setpost] = useState({
+  //   title: 'Introduction to Quranic Tajweed',
+  //   course: 'Quranic Studies',
+  //   audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+  // })
 
   useEffect(() => {
-    // Initialize audio element
-    if (audioRef.current) {
-      audioRef.current.volume = volume
+    const checkFileExists = async () => {
+      const directoryUri = FileSystem.documentDirectory + 'shams_app/'
+      const fileUri = directoryUri + `${id}.mp3`
+      const fileInfo = await FileSystem.getInfoAsync(fileUri)
+      if (fileInfo.exists) {
+        setFileUri(fileUri)
+      }
+    }
 
-      const handleLoadedMetadata = () => {
-        if (audioRef.current) {
-          setDuration(audioRef.current.duration)
+    checkFileExists()
+  }, [id])
+
+  const handleDownload = async () => {
+    if (post?.meta['the-audio-of-the-lesson']) {
+      const uri = post.meta['the-audio-of-the-lesson']
+      const directoryUri = FileSystem.documentDirectory + 'shams_app/'
+      const fileUri = directoryUri + `${id}.mp3`
+
+      try {
+        // Ensure the directory exists
+        const dirInfo = await FileSystem.getInfoAsync(directoryUri)
+        if (!dirInfo.exists) {
+          await FileSystem.makeDirectoryAsync(directoryUri, {
+            intermediates: true
+          })
         }
-      }
 
-      const handleTimeUpdate = () => {
-        if (audioRef.current) {
-          setCurrentTime(audioRef.current.currentTime || 0)
-        }
-      }
+        // Download the file
+        const { uri: downloadedUri } = await FileSystem.downloadAsync(
+          uri,
+          fileUri
+        )
+        console.log(`File downloaded to: ${downloadedUri}`)
 
-      const handleEnded = () => {
-        setIsPlaying(false)
-        setCurrentTime(0)
-      }
-
-      audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata)
-      audioRef.current.addEventListener('timeupdate', handleTimeUpdate)
-      audioRef.current.addEventListener('ended', handleEnded)
-
-      return () => {
-        if (audioRef.current) {
-          audioRef.current.removeEventListener(
-            'loadedmetadata',
-            handleLoadedMetadata
+        // Verify the file exists
+        const fileInfo = await FileSystem.getInfoAsync(downloadedUri)
+        if (fileInfo.exists) {
+          setFileUri(downloadedUri)
+          Alert.alert(
+            'Download complete',
+            `File downloaded to ${downloadedUri}`
           )
-          audioRef.current.removeEventListener('timeupdate', handleTimeUpdate)
-          audioRef.current.removeEventListener('ended', handleEnded)
+        } else {
+          Alert.alert('Download failed', 'File does not exist after download.')
         }
+      } catch (error) {
+        console.error('Download error:', error)
+        Alert.alert(
+          'Download failed',
+          'An error occurred while downloading the file.'
+        )
       }
     }
-  }, [])
+  }
 
-  useEffect(() => {
-    // Set active state when there's a lesson
-    setIsActive(!!currentLesson.audioSrc)
-  }, [currentLesson])
-
-  useEffect(() => {
-    // Update playback rate when changed
-    if (audioRef.current) {
-      audioRef.current.playbackRate = playbackRate
-    }
-  }, [playbackRate])
-
-  const togglePlay = () => {
-    if (audioRef.current) {
+  const togglePlay = async () => {
+    if (sound) {
       if (isPlaying) {
-        audioRef.current.pause()
+        await sound.pauseAsync()
       } else {
-        audioRef.current.play()
+        await sound.playAsync()
       }
       setIsPlaying(!isPlaying)
     }
   }
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = Number.parseFloat(e.target.value)
-    setCurrentTime(newTime)
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime
-    }
+  // const changePlaybackRate = async (rate: number) => {
+  //   if (sound) {
+  //     await sound.setRateAsync(rate)
+  //     setPlaybackRate(rate)
+  //   }
+  // }
+
+  // const handleSeek = async (value: number) => {
+  //   if (sound) {
+  //     await sound.setPositionAsync(value)
+  //   }
+  // }
+
+  // const handleForward = async () => {
+  //   if (sound) {
+  //     const newPosition = currentTime + 30000 // Forward 30 seconds
+  //     await sound.setPositionAsync(newPosition)
+  //   }
+  // }
+
+  // const handleBackward = async () => {
+  //   if (sound) {
+  //     const newPosition = currentTime - 30000 // Backward 30 seconds
+  //     await sound.setPositionAsync(newPosition)
+  //   }
+  // }
+
+  const formatTime = (timeMillis: number) => {
+    const totalSeconds = timeMillis / 1000
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = Math.floor(totalSeconds % 60)
+
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
   }
 
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = Number.parseFloat(e.target.value)
-    setVolume(newVolume)
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume
-    }
-  }
+  // const audioRef = useRef<HTMLAudioElement>(null)
 
-  const formatTime = (time: number) => {
-    if (isNaN(time)) return '0:00'
+  // useEffect(() => {
+  //   // Initialize audio element
+  //   if (audioRef.current) {
+  //     audioRef.current.volume = volume
 
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
-  }
+  //     const handleLoadedMetadata = () => {
+  //       if (audioRef.current) {
+  //         setDuration(audioRef.current.duration)
+  //       }
+  //     }
 
-  const handleDownload = () => {
-    // Create a temporary link to download the audio file
-    const link = document.createElement('a')
-    link.href = currentLesson.audioSrc
-    link.download = `${currentLesson.title}.mp3`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+  //     const handleTimeUpdate = () => {
+  //       if (audioRef.current) {
+  //         setCurrentTime(audioRef.current.currentTime || 0)
+  //       }
+  //     }
 
-  const toggleExpanded = () => {
-    setExpanded(!expanded)
-  }
+  //     const handleEnded = () => {
+  //       setIsPlaying(false)
+  //       setCurrentTime(0)
+  //     }
 
-  const changePlaybackRate = () => {
+  //     audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata)
+  //     audioRef.current.addEventListener('timeupdate', handleTimeUpdate)
+  //     audioRef.current.addEventListener('ended', handleEnded)
+
+  //     return () => {
+  //       if (audioRef.current) {
+  //         audioRef.current.removeEventListener(
+  //           'loadedmetadata',
+  //           handleLoadedMetadata
+  //         )
+  //         audioRef.current.removeEventListener('timeupdate', handleTimeUpdate)
+  //         audioRef.current.removeEventListener('ended', handleEnded)
+  //       }
+  //     }
+  //   }
+  // }, [])
+
+  // useEffect(() => {
+  //   // Set active state when there's a lesson
+  //   setIsActive(!!post.audioSrc)
+  // }, [post])
+
+  // useEffect(() => {
+  //   // Update playback rate when changed
+  //   if (audioRef.current) {
+  //     audioRef.current.playbackRate = playbackRate
+  //   }
+  // }, [playbackRate])
+
+  // const togglePlay = () => {
+  //   if (audioRef.current) {
+  //     if (isPlaying) {
+  //       audioRef.current.pause()
+  //     } else {
+  //       audioRef.current.play()
+  //     }
+  //     setIsPlaying(!isPlaying)
+  //   }
+  // }
+
+  // const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const newTime = Number.parseFloat(e.target.value)
+  //   setCurrentTime(newTime)
+  //   if (audioRef.current) {
+  //     audioRef.current.currentTime = newTime
+  //   }
+  // }
+
+  // const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const newVolume = Number.parseFloat(e.target.value)
+  //   setVolume(newVolume)
+  //   if (audioRef.current) {
+  //     audioRef.current.volume = newVolume
+  //   }
+  // }
+
+  // const formatTime = (time: number) => {
+  //   if (isNaN(time)) return '0:00'
+
+  //   const minutes = Math.floor(time / 60)
+  //   const seconds = Math.floor(time % 60)
+  //   return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  // }
+
+  // const handleDownload = () => {
+  //   // Create a temporary link to download the audio file
+  //   const link = document.createElement('a')
+  //   link.href = post.audioSrc
+  //   link.download = `${post.title}.mp3`
+  //   document.body.appendChild(link)
+  //   link.click()
+  //   document.body.removeChild(link)
+  // }
+
+  const changePlaybackRate = async () => {
     // Cycle through playback rates: 1 -> 1.5 -> 2 -> 0.75 -> 1
     const rates = [1, 1.5, 2, 0.75]
     const currentIndex = rates.indexOf(playbackRate)
     const nextIndex = (currentIndex + 1) % rates.length
-    setPlaybackRate(rates[nextIndex])
+    if (sound) {
+      await sound.setRateAsync(nextIndex)
+      setPlaybackRate(nextIndex)
+    }
+    // setPlaybackRate(rates[nextIndex])
   }
 
-  if (!isActive) return null
+  // if (!isActive) return null
 
   return (
     <View
       className={`fixed left-0 bottom-0 right-0 pb-10 bg-yellow-50  dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 transition-all ${
         expanded ? 'h-60' : 'h-32'
       }`}>
-      {/* <audio ref={audioRef} src={currentLesson.audioSrc} /> */}
+      {/* <audio ref={audioRef} src={post.audioSrc} /> */}
 
       <View className='container mx-auto px-4 h-full flex flex-col'>
         {/* Main player controls */}
-        <View className='flex flex-row items-center justify-between h-20'>
-          {/* Lesson info */}
-          <View className='flex-shrink-0 w-1/4 md:w-1/3'>
-            <Text className='text-sm font-medium truncate'>
-              {currentLesson.title}
-            </Text>
-            <Text className='text-xs text-stone-500 dark:text-stone-400 truncate'>
-              {currentLesson.course}
-            </Text>
-          </View>
-
+        <View className='flex flex-row items-center justify-between h-20 gap-x-4'>
           {/* Controls */}
           <View className='flex flex-row items-center gap-x-2 md:gap-x-4'>
-            <Pressable
+            {/* <Pressable
               className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
               aria-label='Skip backward'>
               <SkipBack size={18} color='black' />
-            </Pressable>
+            </Pressable> */}
 
             <Pressable
               onPress={togglePlay}
@@ -179,11 +283,11 @@ export default function AudioPlayer() {
               )}
             </Pressable>
 
-            <Pressable
+            {/* <Pressable
               className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
               aria-label='Skip forward'>
               <SkipForward size={18} color='black' />
-            </Pressable>
+            </Pressable> */}
           </View>
 
           {/* Progress and actions */}
@@ -223,7 +327,7 @@ export default function AudioPlayer() {
             </Pressable>
 
             <Pressable
-              onPress={toggleExpanded}
+              onPress={() => setExpanded(!expanded)}
               className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
               aria-label={expanded ? 'Minimize player' : 'Expand player'}>
               {expanded ? (
@@ -232,6 +336,15 @@ export default function AudioPlayer() {
                 <Maximize2 size={18} color='black' />
               )}
             </Pressable>
+          </View>
+          {/* Lesson info */}
+          <View className='flex flex-col flex-1 w-1/4'>
+            <Text className='text-sm text-right dir-rtl font-medium truncate text-stone-900 dark:text-stone-100'>
+              {post.title.rendered}
+            </Text>
+            <Text className='text-xs text-right dir-rtl text-stone-500 dark:text-stone-400 truncate'>
+              آیت الله حسینی آملی (حفظه الله)
+            </Text>
           </View>
         </View>
 

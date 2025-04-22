@@ -30,7 +30,6 @@ export default function LessonPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<ErrorType | null>(null)
   const [sound, setSound] = useState<Audio.Sound | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [fileUri, setFileUri] = useState<string | null>(null)
@@ -186,171 +185,14 @@ export default function LessonPage() {
         </ScrollView>
         {post?.meta['the-audio-of-the-lesson'] && (
           <AudioPlayer
-          // sound={sound}
-          // title={post.title.rendered}
-          // duration={post.duration}
+            id={id}
+            post={post}
+            sound={sound}
+            duration={Number(duration)}
+            currentTime={Number(currentTime)}
           />
         )}
       </SafeAreaView>
     </SafeAreaProvider>
   )
 }
-// const PostDetail = () => {
-
-//   useEffect(() => {
-//     const checkFileExists = async () => {
-//       const directoryUri = FileSystem.documentDirectory + 'shams_app/'
-//       const fileUri = directoryUri + `${id}.mp3`
-//       const fileInfo = await FileSystem.getInfoAsync(fileUri)
-//       if (fileInfo.exists) {
-//         setFileUri(fileUri)
-//       }
-//     }
-
-//     checkFileExists()
-//   }, [id])
-
-//   const handleDownload = async () => {
-//     if (post?.meta['the-audio-of-the-lesson']) {
-//       const uri = post.meta['the-audio-of-the-lesson']
-//       const directoryUri = FileSystem.documentDirectory + 'shams_app/'
-//       const fileUri = directoryUri + `${id}.mp3`
-
-//       try {
-//         // Ensure the directory exists
-//         const dirInfo = await FileSystem.getInfoAsync(directoryUri)
-//         if (!dirInfo.exists) {
-//           await FileSystem.makeDirectoryAsync(directoryUri, {
-//             intermediates: true
-//           })
-//         }
-
-//         // Download the file
-//         const { uri: downloadedUri } = await FileSystem.downloadAsync(
-//           uri,
-//           fileUri
-//         )
-//         console.log(`File downloaded to: ${downloadedUri}`)
-
-//         // Verify the file exists
-//         const fileInfo = await FileSystem.getInfoAsync(downloadedUri)
-//         if (fileInfo.exists) {
-//           setFileUri(downloadedUri)
-//           Alert.alert(
-//             'Download complete',
-//             `File downloaded to ${downloadedUri}`
-//           )
-//         } else {
-//           Alert.alert('Download failed', 'File does not exist after download.')
-//         }
-//       } catch (error) {
-//         console.error('Download error:', error)
-//         Alert.alert(
-//           'Download failed',
-//           'An error occurred while downloading the file.'
-//         )
-//       }
-//     }
-//   }
-
-//   const handlePlayPause = async () => {
-//     if (sound) {
-//       if (isPlaying) {
-//         await sound.pauseAsync()
-//       } else {
-//         await sound.playAsync()
-//       }
-//       setIsPlaying(!isPlaying)
-//     }
-//   }
-
-//   const handleSeek = async (value: number) => {
-//     if (sound) {
-//       await sound.setPositionAsync(value)
-//     }
-//   }
-
-//   const handleForward = async () => {
-//     if (sound) {
-//       const newPosition = currentTime + 30000 // Forward 30 seconds
-//       await sound.setPositionAsync(newPosition)
-//     }
-//   }
-
-//   const handleBackward = async () => {
-//     if (sound) {
-//       const newPosition = currentTime - 30000 // Backward 30 seconds
-//       await sound.setPositionAsync(newPosition)
-//     }
-//   }
-
-//   const formatTime = (timeMillis: number) => {
-//     const totalSeconds = timeMillis / 1000
-//     const minutes = Math.floor(totalSeconds / 60)
-//     const seconds = Math.floor(totalSeconds % 60)
-
-//     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
-//   }
-
-//   const handleSettings = (event: GestureResponderEvent) => {
-//     Alert.alert('Settings', 'Settings button pressed.')
-//   }
-
-//   return (
-//     <SafeAreaView className='flex-1 bg-amber-50'>
-//       {post?.meta['the-audio-of-the-lesson'] && (
-//         <View className='absolute bottom-0 pb-20 w-full bg-amber-200 p-4 align-middle'>
-//           <View className='flex flex-row justify-around mb-2'>
-//             <TouchableOpacity onPress={handleSettings}>
-//               <MaterialIcons name='settings-suggest' size={30} color='black' />
-//             </TouchableOpacity>
-
-//             <TouchableOpacity onPress={handleBackward}>
-//               <MaterialIcons name='replay-30' size={30} color='black' />
-//             </TouchableOpacity>
-
-//             <TouchableOpacity onPress={handlePlayPause}>
-//               {isPlaying ? (
-//                 <MaterialIcons
-//                   name='pause-circle-outline'
-//                   size={30}
-//                   color='black'
-//                 />
-//               ) : (
-//                 <MaterialIcons
-//                   name='play-circle-outline'
-//                   size={30}
-//                   color='black'
-//                 />
-//               )}
-//             </TouchableOpacity>
-
-//             <TouchableOpacity onPress={handleForward}>
-//               <MaterialIcons name='forward-30' size={30} color='black' />
-//             </TouchableOpacity>
-//             <TouchableOpacity onPress={handleDownload}>
-//               <MaterialIcons name='downloading' size={30} color='black' />
-//             </TouchableOpacity>
-//           </View>
-
-//           <View className='flex flex-row items-center justify-between mb-2'>
-//             <Text>{formatTime(currentTime)}</Text>
-//             <Slider
-//               style={{ flex: 1, marginHorizontal: 8 }}
-//               minimumValue={0}
-//               maximumValue={duration}
-//               value={currentTime}
-//               onValueChange={handleSeek}
-//               minimumTrackTintColor='#16a34a'
-//               maximumTrackTintColor='gray'
-//               thumbTintColor='#16a34a'
-//             />
-//             <Text>{formatTime(duration)}</Text>
-//           </View>
-//         </View>
-//       )}
-//     </SafeAreaView>
-//   )
-// }
-
-// export default PostDetail
