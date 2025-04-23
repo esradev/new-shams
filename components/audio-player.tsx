@@ -138,13 +138,6 @@ export default function AudioPlayer({ id, post }: any) {
     }
   }
 
-  // const changePlaybackRate = async (rate: number) => {
-  //   if (sound) {
-  //     await sound.setRateAsync(rate)
-  //     setPlaybackRate(rate)
-  //   }
-  // }
-
   const handleSeek = async (value: number) => {
     if (sound) {
       await sound.setPositionAsync(value)
@@ -269,7 +262,7 @@ export default function AudioPlayer({ id, post }: any) {
               minimumValue={0}
               maximumValue={duration}
               value={currentTime}
-              onValueChange={handleSeek}
+              onSlidingComplete={handleSeek}
               minimumTrackTintColor='#f43f5e' // bg-green-700
               maximumTrackTintColor='#e7e5e4' // bg-stone-200
               thumbTintColor='#f43f5e' // styled like Tailwind thumb
@@ -290,7 +283,7 @@ export default function AudioPlayer({ id, post }: any) {
                   maximumValue={1}
                   step={0.01}
                   value={volume}
-                  onValueChange={handleVolumeChange}
+                  onSlidingComplete={handleVolumeChange}
                   minimumTrackTintColor='#f43f5e' // Tailwind "bg-green-700" equivalent
                   maximumTrackTintColor='#e7e5e4' // stone-200
                   thumbTintColor='#f43f5e' // same as minimumTrack for consistency
