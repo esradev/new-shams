@@ -1,64 +1,22 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, ScrollView, StatusBar } from 'react-native'
+import { View, Text, ScrollView } from 'react-native'
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
 import { Href } from 'expo-router'
-import axios from 'axios'
 
 import CourseCard from '@/components/course-card'
 import LoadingSpinner from '@/components/loading-spinner'
+import { useApi } from '@/context/api-context'
 
 export default function Courses() {
-  const [categories, setCategories] = useState<
-    {
-      id: number
-      name: string
-      count: number
-      parent: number
-      description: string
-    }[]
-  >([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-
-  useEffect(() => {
-    // Get all categories from the WordPress REST API
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get(
-          'https://shams-almaarif.com/wp-json/wp/v2/categories?per_page=100'
-        )
-        // Just get the categories that have posts and is the child and not have children
-        const filteredCategories = response.data.filter(
-          (category: { count: number; parent: number; id: number }) =>
-            category.count > 0
-        )
-
-        setCategories(filteredCategories)
-      } catch (err) {
-        setError(err as any)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCategories()
-  }, [])
-
-  if (error) {
-    return (
-      <SafeAreaView className='flex-1 items-center justify-center bg-white p-4'>
-        <Text className='text-red-500 text-lg font-bold text-center mb-4 w-full'>
-          Error: {error?.message}
-        </Text>
-        <StatusBar barStyle='dark-content' backgroundColor='#059669' />
-      </SafeAreaView>
-    )
-  }
+  const { categories, loading, error } = useApi()
 
   return (
     <SafeAreaProvider>
       <SafeAreaView className='flex flex-1 bg-white dark:bg-gray-900'>
-        {loading ? (
+        {error ? (
+          <Text className='text-red-500 text-lg font-bold text-center mb-4 w-full'>
+            Error: {error?.message}
+          </Text>
+        ) : loading ? (
           <LoadingSpinner />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
