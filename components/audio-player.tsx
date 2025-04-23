@@ -33,12 +33,6 @@ export default function AudioPlayer({
   const [volume, setVolume] = useState(0.7)
   const [expanded, setExpanded] = useState(false)
   const [playbackRate, setPlaybackRate] = useState(1)
-  const [isActive, setIsActive] = useState(false)
-  // const [post, setpost] = useState({
-  //   title: 'Introduction to Quranic Tajweed',
-  //   course: 'Quranic Studies',
-  //   audioSrc: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
-  // })
 
   useEffect(() => {
     const checkFileExists = async () => {
@@ -114,25 +108,25 @@ export default function AudioPlayer({
   //   }
   // }
 
-  // const handleSeek = async (value: number) => {
-  //   if (sound) {
-  //     await sound.setPositionAsync(value)
-  //   }
-  // }
+  const handleSeek = async (value: number) => {
+    if (sound) {
+      await sound.setPositionAsync(value)
+    }
+  }
 
-  // const handleForward = async () => {
-  //   if (sound) {
-  //     const newPosition = currentTime + 30000 // Forward 30 seconds
-  //     await sound.setPositionAsync(newPosition)
-  //   }
-  // }
+  const handleForward = async () => {
+    if (sound) {
+      const newPosition = currentTime + 30000 // Forward 30 seconds
+      await sound.setPositionAsync(newPosition)
+    }
+  }
 
-  // const handleBackward = async () => {
-  //   if (sound) {
-  //     const newPosition = currentTime - 30000 // Backward 30 seconds
-  //     await sound.setPositionAsync(newPosition)
-  //   }
-  // }
+  const handleBackward = async () => {
+    if (sound) {
+      const newPosition = currentTime - 30000 // Backward 30 seconds
+      await sound.setPositionAsync(newPosition)
+    }
+  }
 
   const formatTime = (timeMillis: number) => {
     const totalSeconds = timeMillis / 1000
@@ -142,103 +136,12 @@ export default function AudioPlayer({
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
   }
 
-  // const audioRef = useRef<HTMLAudioElement>(null)
-
-  // useEffect(() => {
-  //   // Initialize audio element
-  //   if (audioRef.current) {
-  //     audioRef.current.volume = volume
-
-  //     const handleLoadedMetadata = () => {
-  //       if (audioRef.current) {
-  //         setDuration(audioRef.current.duration)
-  //       }
-  //     }
-
-  //     const handleTimeUpdate = () => {
-  //       if (audioRef.current) {
-  //         setCurrentTime(audioRef.current.currentTime || 0)
-  //       }
-  //     }
-
-  //     const handleEnded = () => {
-  //       setIsPlaying(false)
-  //       setCurrentTime(0)
-  //     }
-
-  //     audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata)
-  //     audioRef.current.addEventListener('timeupdate', handleTimeUpdate)
-  //     audioRef.current.addEventListener('ended', handleEnded)
-
-  //     return () => {
-  //       if (audioRef.current) {
-  //         audioRef.current.removeEventListener(
-  //           'loadedmetadata',
-  //           handleLoadedMetadata
-  //         )
-  //         audioRef.current.removeEventListener('timeupdate', handleTimeUpdate)
-  //         audioRef.current.removeEventListener('ended', handleEnded)
-  //       }
-  //     }
-  //   }
-  // }, [])
-
-  // useEffect(() => {
-  //   // Set active state when there's a lesson
-  //   setIsActive(!!post.audioSrc)
-  // }, [post])
-
-  // useEffect(() => {
-  //   // Update playback rate when changed
-  //   if (audioRef.current) {
-  //     audioRef.current.playbackRate = playbackRate
-  //   }
-  // }, [playbackRate])
-
-  // const togglePlay = () => {
-  //   if (audioRef.current) {
-  //     if (isPlaying) {
-  //       audioRef.current.pause()
-  //     } else {
-  //       audioRef.current.play()
-  //     }
-  //     setIsPlaying(!isPlaying)
-  //   }
-  // }
-
-  // const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const newTime = Number.parseFloat(e.target.value)
-  //   setCurrentTime(newTime)
-  //   if (audioRef.current) {
-  //     audioRef.current.currentTime = newTime
-  //   }
-  // }
-
-  // const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const newVolume = Number.parseFloat(e.target.value)
-  //   setVolume(newVolume)
-  //   if (audioRef.current) {
-  //     audioRef.current.volume = newVolume
-  //   }
-  // }
-
-  // const formatTime = (time: number) => {
-  //   if (isNaN(time)) return '0:00'
-
-  //   const minutes = Math.floor(time / 60)
-  //   const seconds = Math.floor(time % 60)
-  //   return `${minutes}:${seconds.toString().padStart(2, '0')}`
-  // }
-
-  // const handleDownload = () => {
-  //   // Create a temporary link to download the audio file
-  //   const link = document.createElement('a')
-  //   link.href = post.audioSrc
-  //   link.download = `${post.title}.mp3`
-  //   document.body.appendChild(link)
-  //   link.click()
-  //   document.body.removeChild(link)
-  // }
+  const handleVolumeChange = value => {
+    if (sound) {
+      sound.setVolumeAsync(value)
+      setVolume(value)
+    }
+  }
 
   const changePlaybackRate = async () => {
     // Cycle through playback rates: 1 -> 1.5 -> 2 -> 0.75 -> 1
@@ -249,28 +152,39 @@ export default function AudioPlayer({
       await sound.setRateAsync(nextIndex)
       setPlaybackRate(nextIndex)
     }
-    // setPlaybackRate(rates[nextIndex])
+    setPlaybackRate(rates[nextIndex])
   }
 
-  // if (!isActive) return null
+  useEffect(() => {
+    if (sound) {
+      sound.setRateAsync(playbackRate)
+      setPlaybackRate(playbackRate)
+    }
+
+    return () => {
+      if (sound) {
+        sound.setRateAsync(1)
+        setPlaybackRate(1)
+      }
+    }
+  }, [playbackRate])
 
   return (
     <View
       className={`fixed left-0 bottom-0 right-0 pb-10 bg-yellow-50  dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 transition-all ${
         expanded ? 'h-60' : 'h-32'
       }`}>
-      {/* <audio ref={audioRef} src={post.audioSrc} /> */}
-
       <View className='container mx-auto px-4 h-full flex flex-col'>
         {/* Main player controls */}
         <View className='flex flex-row items-center justify-between h-20 gap-x-4'>
           {/* Controls */}
           <View className='flex flex-row items-center gap-x-2 md:gap-x-4'>
-            {/* <Pressable
+            <Pressable
+              onPress={handleBackward}
               className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
               aria-label='Skip backward'>
               <SkipBack size={18} color='black' />
-            </Pressable> */}
+            </Pressable>
 
             <Pressable
               onPress={togglePlay}
@@ -283,42 +197,15 @@ export default function AudioPlayer({
               )}
             </Pressable>
 
-            {/* <Pressable
+            <Pressable
+              onPress={handleForward}
               className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
               aria-label='Skip forward'>
               <SkipForward size={18} color='black' />
-            </Pressable> */}
+            </Pressable>
           </View>
-
-          {/* Progress and actions */}
-          <View className='hidden md:flex items-center gap-x-2 flex-1 max-w-md'>
-            <Text className='text-xs w-10 text-right'>
-              {formatTime(currentTime)}
-            </Text>
-            <Slider
-              style={{ flex: 1, height: 20 }}
-              minimumValue={0}
-              maximumValue={duration || 0}
-              value={currentTime}
-              // onValueChange={handleSeek}
-              minimumTrackTintColor='#f43f5e' // Tailwind 'bg-green-700'
-              maximumTrackTintColor='#e7e5e4' // stone-200
-              thumbTintColor='#f43f5e' // same as minimumTrack for a consistent look
-            />
-            <Text className='text-xs w-10'>{formatTime(duration)}</Text>
-          </View>
-
           {/* Actions */}
           <View className='flex flex-row items-center gap-x-2'>
-            <Pressable
-              onPress={changePlaybackRate}
-              className='hidden md:block text-xs font-medium px-2 py-1 rounded hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
-              aria-label='Change playback speed'>
-              <Text className='text-xs font-medium px-2 py-1 rounded hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'>
-                {playbackRate}x
-              </Text>
-            </Pressable>
-
             <Pressable
               onPress={handleDownload}
               className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
@@ -349,15 +236,15 @@ export default function AudioPlayer({
         </View>
 
         {/* Mobile progress bar (always visible) */}
-        <View className='md:hidden mt-2 pb-4 px-2'>
+        <View className='mt-2 pb-4 px-2'>
           <View className='flex flex-row items-center gap-x-2'>
             <Text className='text-xs'>{formatTime(currentTime)}</Text>
             <Slider
               style={{ flex: 1, height: 20 }}
               minimumValue={0}
-              maximumValue={duration || 0}
+              maximumValue={duration}
               value={currentTime}
-              // onValueChange={handleSeek}
+              onValueChange={handleSeek}
               minimumTrackTintColor='#f43f5e' // bg-green-700
               maximumTrackTintColor='#e7e5e4' // bg-stone-200
               thumbTintColor='#f43f5e' // styled like Tailwind thumb
@@ -378,7 +265,7 @@ export default function AudioPlayer({
                   maximumValue={1}
                   step={0.01}
                   value={volume}
-                  // onValueChange={handleVolumeChange}
+                  onValueChange={handleVolumeChange}
                   minimumTrackTintColor='#f43f5e' // Tailwind "bg-green-700" equivalent
                   maximumTrackTintColor='#e7e5e4' // stone-200
                   thumbTintColor='#f43f5e' // same as minimumTrack for consistency
