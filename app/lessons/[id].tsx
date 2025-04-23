@@ -5,7 +5,6 @@ import { ArrowLeft, BookOpen, Calendar } from 'lucide-react-native'
 import axios from 'axios'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import RenderHTML from 'react-native-render-html'
-import { Audio } from 'expo-av'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 
 import AudioPlayer from '@/components/audio-player'
@@ -29,50 +28,6 @@ export default function LessonPage() {
   const [courseId, setCourseId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<ErrorType | null>(null)
-  const [sound, setSound] = useState<Audio.Sound | null>(null)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [fileUri, setFileUri] = useState<string | null>(null)
-
-  useEffect(() => {
-    const loadSound = async () => {
-      if (fileUri) {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: fileUri },
-          { shouldPlay: false }
-        )
-        setSound(sound)
-
-        sound.setOnPlaybackStatusUpdate(status => {
-          if (status.isLoaded) {
-            setCurrentTime(status.positionMillis)
-            setDuration(status.durationMillis || 0)
-          }
-        })
-      } else if (post?.meta['the-audio-of-the-lesson']) {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: post.meta['the-audio-of-the-lesson'] },
-          { shouldPlay: false }
-        )
-        setSound(sound)
-
-        sound.setOnPlaybackStatusUpdate(status => {
-          if (status.isLoaded) {
-            setCurrentTime(status.positionMillis)
-            setDuration(status.durationMillis || 0)
-          }
-        })
-      }
-    }
-
-    loadSound()
-
-    return () => {
-      if (sound) {
-        sound.unloadAsync()
-      }
-    }
-  }, [post, fileUri])
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -184,13 +139,7 @@ export default function LessonPage() {
           </View>
         </ScrollView>
         {post?.meta['the-audio-of-the-lesson'] && (
-          <AudioPlayer
-            id={id}
-            post={post}
-            sound={sound}
-            duration={Number(duration)}
-            currentTime={Number(currentTime)}
-          />
+          <AudioPlayer id={id} post={post} />
         )}
       </SafeAreaView>
     </SafeAreaProvider>

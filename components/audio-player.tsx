@@ -1,15 +1,11 @@
 import type React from 'react'
-import {
-  View,
-  Pressable,
-  Text,
-  Alert,
-  GestureResponderEvent
-} from 'react-native'
+import { Audio } from 'expo-av'
+
+import { View, Pressable, Text, Alert } from 'react-native'
 import Slider from '@react-native-community/slider'
 import * as FileSystem from 'expo-file-system'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Play,
   Pause,
@@ -18,21 +14,62 @@ import {
   Volume2,
   Download,
   Minimize2,
-  Maximize2
+  Maximize2,
+  ChevronsLeft,
+  ChevronsRight,
+  AudioLines,
+  AudioWaveform
 } from 'lucide-react-native'
 
-export default function AudioPlayer({
-  id,
-  post,
-  sound,
-  duration,
-  currentTime
-}: any) {
-  const [fileUri, setFileUri] = useState<string | null>(null)
+export default function AudioPlayer({ id, post }: any) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.7)
   const [expanded, setExpanded] = useState(false)
   const [playbackRate, setPlaybackRate] = useState(1)
+  const [sound, setSound] = useState<Audio.Sound | null>(null)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [fileUri, setFileUri] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadSound = async () => {
+      if (fileUri) {
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: fileUri },
+          { shouldPlay: false }
+        )
+        setSound(sound)
+
+        sound.setOnPlaybackStatusUpdate(status => {
+          if (status.isLoaded) {
+            setCurrentTime(status.positionMillis)
+            setDuration(status.durationMillis || 0)
+          }
+        })
+      } else if (post?.meta['the-audio-of-the-lesson']) {
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: post.meta['the-audio-of-the-lesson'] },
+          { shouldPlay: false }
+        )
+        setSound(sound)
+
+        sound.setOnPlaybackStatusUpdate(status => {
+          if (status.isLoaded) {
+            setCurrentTime(status.positionMillis)
+            setDuration(status.durationMillis || 0)
+          }
+        })
+      }
+    }
+
+    loadSound()
+
+    return () => {
+      if (sound) {
+        sound.unloadAsync()
+      }
+    }
+  }, [post, fileUri])
 
   useEffect(() => {
     const checkFileExists = async () => {
@@ -136,34 +173,22 @@ export default function AudioPlayer({
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
   }
 
-  const handleVolumeChange = value => {
+  const handleVolumeChange = (value: number) => {
     if (sound) {
       sound.setVolumeAsync(value)
       setVolume(value)
     }
   }
 
-  const changePlaybackRate = async () => {
-    // Cycle through playback rates: 1 -> 1.5 -> 2 -> 0.75 -> 1
-    const rates = [1, 1.5, 2, 0.75]
-    const currentIndex = rates.indexOf(playbackRate)
-    const nextIndex = (currentIndex + 1) % rates.length
-    if (sound) {
-      await sound.setRateAsync(nextIndex)
-      setPlaybackRate(nextIndex)
-    }
-    setPlaybackRate(rates[nextIndex])
-  }
-
   useEffect(() => {
     if (sound) {
-      sound.setRateAsync(playbackRate)
+      sound.setRateAsync(playbackRate, true)
       setPlaybackRate(playbackRate)
     }
 
     return () => {
       if (sound) {
-        sound.setRateAsync(1)
+        sound.setRateAsync(1, true)
         setPlaybackRate(1)
       }
     }
@@ -183,12 +208,12 @@ export default function AudioPlayer({
               onPress={handleBackward}
               className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
               aria-label='Skip backward'>
-              <SkipBack size={18} color='black' />
+              <ChevronsLeft size={18} color='black' />
             </Pressable>
 
             <Pressable
               onPress={togglePlay}
-              className='p-2 rounded-full bg-green-700 hover:bg-green-700/80 text-white transition-colors'
+              className='p-2 rounded-full bg-green-700 text-white transition-colors'
               aria-label={isPlaying ? 'Pause' : 'Play'}>
               {isPlaying ? (
                 <Pause size={20} color='white' />
@@ -201,7 +226,7 @@ export default function AudioPlayer({
               onPress={handleForward}
               className='p-1 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors'
               aria-label='Skip forward'>
-              <SkipForward size={18} color='black' />
+              <ChevronsRight size={18} color='black' />
             </Pressable>
           </View>
           {/* Actions */}
@@ -273,7 +298,7 @@ export default function AudioPlayer({
               </View>
 
               <View className='flex flex-row items-center gap-x-2'>
-                <Text className='text-sm'>Playback Speed:</Text>
+                <Text className='text-sm'>سرعت پخش:</Text>
                 <View className='flex flex-row gap-x-2'>
                   {[0.75, 1, 1.5, 2].map(rate => (
                     <Pressable
