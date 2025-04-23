@@ -1,5 +1,5 @@
 import { Text, ScrollView, View, Pressable } from 'react-native'
-import { useLocalSearchParams, Link } from 'expo-router'
+import { useLocalSearchParams, Link, router } from 'expo-router'
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
 import { ChevronLeft } from 'lucide-react-native'
 
@@ -59,55 +59,46 @@ const CategoryPosts = () => {
                     جلسات
                   </Text>
                   <View className='gap-y-3'>
-                    {posts.map((lesson, index) =>
-                      loading ? (
-                        <View
-                          key={index}
-                          className='h-20 w-full bg-gray-100 dark:bg-gray-700 animate-pulse rounded-lg'>
-                          <View className='flex flex-row-reverse items-center p-3'>
-                            <View className='flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 ml-3 text-sm font-medium'>
-                              <Text>{index + 1}</Text>
-                            </View>
-                            <View className='flex-1'>
-                              <Text className='text-lg font-medium text-right dir-rtl text-gray-800 dark:text-gray-200'>
-                                ...........
-                              </Text>
-                              <Text className='text-base text-gray-500 dark:text-gray-500 text-right dir-rtl'>
-                                ......
-                              </Text>
-                            </View>
+                    {posts.map((lesson, index) => (
+                      <Link
+                        asChild
+                        href={{
+                          pathname: `/lessons/${lesson.id}`,
+                          params: {
+                            postTitle: lesson.title.rendered,
+                            postContent: lesson.content.rendered,
+                            postAudioSrc:
+                              lesson.meta['the-audio-of-the-lesson'],
+                            postDate: lesson.meta['date-of-the-lesson'],
+                            categorayId: id,
+                            categorayName: category?.name
+                          }
+                        }}
+                        key={lesson.id}
+                        className='flex flex-row-reverse items-center p-3 rounded-lg bg-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 dark:bg-gray-700 '>
+                        <Pressable className='flex flex-row-reverse items-center w-full'>
+                          <View className='flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-700 text-emerald-700 dark:text-emerald-400 ml-3 text-sm font-medium'>
+                            {/* Todo: Add lessons count order number */}
+                            <Text>{index + 1}</Text>
                           </View>
-                        </View>
-                      ) : (
-                        <Link
-                          asChild
-                          href={`/lessons/${lesson.id}`}
-                          key={lesson.id}
-                          className='flex flex-row-reverse items-center p-3 rounded-lg bg-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 dark:bg-gray-700 '>
-                          <Pressable className='flex flex-row-reverse items-center w-full'>
-                            <View className='flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-700 text-emerald-700 dark:text-emerald-400 ml-3 text-sm font-medium'>
-                              {/* Todo: Add lessons count order number */}
-                              <Text>{index + 1}</Text>
-                            </View>
-                            <View className='flex-1'>
-                              <Text className='text-lg font-medium text-right dir-rtl text-gray-800 dark:text-gray-200'>
-                                {lesson?.title?.rendered}
-                              </Text>
-                              <Text className='text-base text-gray-500 dark:text-gray-500 text-right dir-rtl'>
-                                {lesson?.duration || '00:00'}
-                              </Text>
-                            </View>
-                            <View className='flwx items-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-full'>
-                              <ChevronLeft
-                                size={16}
-                                color='gray'
-                                className='mr-2'
-                              />
-                            </View>
-                          </Pressable>
-                        </Link>
-                      )
-                    )}
+                          <View className='flex-1'>
+                            <Text className='text-lg font-medium text-right dir-rtl text-gray-800 dark:text-gray-200'>
+                              {lesson?.title?.rendered}
+                            </Text>
+                            <Text className='text-base text-gray-500 dark:text-gray-500 text-right dir-rtl'>
+                              {lesson?.duration || '00:00'}
+                            </Text>
+                          </View>
+                          <View className='flwx items-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-full'>
+                            <ChevronLeft
+                              size={16}
+                              color='gray'
+                              className='mr-2'
+                            />
+                          </View>
+                        </Pressable>
+                      </Link>
+                    ))}
                   </View>
                 </View>
               </>

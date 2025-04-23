@@ -4,7 +4,6 @@ import { Stack } from 'expo-router'
 import { ApiProvider } from '@/context/api-context'
 import Header from '@/components/header'
 import './global.css'
-import 'react-loading-skeleton/dist/skeleton.css'
 
 export default function RootLayout() {
   return (

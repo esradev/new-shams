@@ -3,7 +3,7 @@ import { Audio } from 'expo-av'
 import * as FileSystem from 'expo-file-system'
 import { Alert } from 'react-native'
 
-export function useAudioPlayer(id: string, post: any) {
+export function useAudioPlayer(id: string, postAudioSrc: any) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.7)
   const [expanded, setExpanded] = useState(false)
@@ -29,7 +29,7 @@ export function useAudioPlayer(id: string, post: any) {
     const loadSound = async () => {
       if (sound) await sound.unloadAsync()
 
-      const uri = fileUri ?? post?.meta?.['the-audio-of-the-lesson']
+      const uri = fileUri ?? postAudioSrc
       if (!uri) return
 
       const { sound: newSound } = await Audio.Sound.createAsync(
@@ -53,7 +53,7 @@ export function useAudioPlayer(id: string, post: any) {
         sound.unloadAsync()
       }
     }
-  }, [fileUri, post])
+  }, [fileUri, postAudioSrc])
 
   useEffect(() => {
     if (sound) {
@@ -99,7 +99,7 @@ export function useAudioPlayer(id: string, post: any) {
   }
 
   const handleDownload = async () => {
-    const uri = post?.meta?.['the-audio-of-the-lesson']
+    const uri = postAudioSrc
     if (!uri) return
 
     const directoryUri = FileSystem.documentDirectory + 'shams_app/'
@@ -157,6 +157,6 @@ export function useAudioPlayer(id: string, post: any) {
     setExpanded,
     playbackRate,
     setPlaybackRate,
-    post
+    postAudioSrc
   }
 }

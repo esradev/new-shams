@@ -17,7 +17,7 @@ import {
 
 import { useAudioPlayer } from '@/hooks/use-audio-player'
 
-export default function AudioPlayer({ id, post }: any) {
+export default function AudioPlayer({ id, postAudioSrc, postTitle }: any) {
   const {
     isPlaying,
     togglePlay,
@@ -34,7 +34,7 @@ export default function AudioPlayer({ id, post }: any) {
     setExpanded,
     playbackRate,
     setPlaybackRate
-  } = useAudioPlayer(id, post)
+  } = useAudioPlayer(id, postAudioSrc)
 
   return (
     <View
@@ -94,7 +94,7 @@ export default function AudioPlayer({ id, post }: any) {
           {/* Lesson info */}
           <View className='flex flex-col flex-1 w-1/4'>
             <Text className='text-sm text-right dir-rtl font-medium truncate text-stone-900 dark:text-stone-100'>
-              {post.title.rendered}
+              {postTitle}
             </Text>
             <Text className='text-xs text-right dir-rtl text-stone-500 dark:text-stone-400 truncate'>
               آیت الله حسینی آملی (حفظه الله)
