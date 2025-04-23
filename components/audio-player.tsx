@@ -1,191 +1,40 @@
 import type React from 'react'
 import { Audio } from 'expo-av'
 
-import { View, Pressable, Text, Alert } from 'react-native'
+import { View, Pressable, Text } from 'react-native'
 import Slider from '@react-native-community/slider'
-import * as FileSystem from 'expo-file-system'
 
-import { useState, useEffect } from 'react'
 import {
   Play,
   Pause,
-  SkipBack,
-  SkipForward,
   Volume2,
   Download,
   Minimize2,
   Maximize2,
   ChevronsLeft,
-  ChevronsRight,
-  AudioLines,
-  AudioWaveform
+  ChevronsRight
 } from 'lucide-react-native'
 
+import { useAudioPlayer } from '@/hooks/use-audio-player'
+
 export default function AudioPlayer({ id, post }: any) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [volume, setVolume] = useState(0.7)
-  const [expanded, setExpanded] = useState(false)
-  const [playbackRate, setPlaybackRate] = useState(1)
-  const [sound, setSound] = useState<Audio.Sound | null>(null)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [fileUri, setFileUri] = useState<string | null>(null)
-
-  useEffect(() => {
-    const loadSound = async () => {
-      if (fileUri) {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: fileUri },
-          { shouldPlay: false }
-        )
-        setSound(sound)
-
-        sound.setOnPlaybackStatusUpdate(status => {
-          if (status.isLoaded) {
-            setCurrentTime(status.positionMillis)
-            setDuration(status.durationMillis || 0)
-          }
-        })
-      } else if (post?.meta['the-audio-of-the-lesson']) {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: post.meta['the-audio-of-the-lesson'] },
-          { shouldPlay: false }
-        )
-        setSound(sound)
-
-        sound.setOnPlaybackStatusUpdate(status => {
-          if (status.isLoaded) {
-            setCurrentTime(status.positionMillis)
-            setDuration(status.durationMillis || 0)
-          }
-        })
-      }
-    }
-
-    loadSound()
-
-    return () => {
-      if (sound) {
-        sound.unloadAsync()
-      }
-    }
-  }, [post, fileUri])
-
-  useEffect(() => {
-    const checkFileExists = async () => {
-      const directoryUri = FileSystem.documentDirectory + 'shams_app/'
-      const fileUri = directoryUri + `${id}.mp3`
-      const fileInfo = await FileSystem.getInfoAsync(fileUri)
-      if (fileInfo.exists) {
-        setFileUri(fileUri)
-      }
-    }
-
-    checkFileExists()
-  }, [id])
-
-  const handleDownload = async () => {
-    if (post?.meta['the-audio-of-the-lesson']) {
-      const uri = post.meta['the-audio-of-the-lesson']
-      const directoryUri = FileSystem.documentDirectory + 'shams_app/'
-      const fileUri = directoryUri + `${id}.mp3`
-
-      try {
-        // Ensure the directory exists
-        const dirInfo = await FileSystem.getInfoAsync(directoryUri)
-        if (!dirInfo.exists) {
-          await FileSystem.makeDirectoryAsync(directoryUri, {
-            intermediates: true
-          })
-        }
-
-        // Download the file
-        const { uri: downloadedUri } = await FileSystem.downloadAsync(
-          uri,
-          fileUri
-        )
-        console.log(`File downloaded to: ${downloadedUri}`)
-
-        // Verify the file exists
-        const fileInfo = await FileSystem.getInfoAsync(downloadedUri)
-        if (fileInfo.exists) {
-          setFileUri(downloadedUri)
-          Alert.alert(
-            'Download complete',
-            `File downloaded to ${downloadedUri}`
-          )
-        } else {
-          Alert.alert('Download failed', 'File does not exist after download.')
-        }
-      } catch (error) {
-        console.error('Download error:', error)
-        Alert.alert(
-          'Download failed',
-          'An error occurred while downloading the file.'
-        )
-      }
-    }
-  }
-
-  const togglePlay = async () => {
-    if (sound) {
-      if (isPlaying) {
-        await sound.pauseAsync()
-      } else {
-        await sound.playAsync()
-      }
-      setIsPlaying(!isPlaying)
-    }
-  }
-
-  const handleSeek = async (value: number) => {
-    if (sound) {
-      await sound.setPositionAsync(value)
-    }
-  }
-
-  const handleForward = async () => {
-    if (sound) {
-      const newPosition = currentTime + 30000 // Forward 30 seconds
-      await sound.setPositionAsync(newPosition)
-    }
-  }
-
-  const handleBackward = async () => {
-    if (sound) {
-      const newPosition = currentTime - 30000 // Backward 30 seconds
-      await sound.setPositionAsync(newPosition)
-    }
-  }
-
-  const formatTime = (timeMillis: number) => {
-    const totalSeconds = timeMillis / 1000
-    const minutes = Math.floor(totalSeconds / 60)
-    const seconds = Math.floor(totalSeconds % 60)
-
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
-  }
-
-  const handleVolumeChange = (value: number) => {
-    if (sound) {
-      sound.setVolumeAsync(value)
-      setVolume(value)
-    }
-  }
-
-  useEffect(() => {
-    if (sound) {
-      sound.setRateAsync(playbackRate, true)
-      setPlaybackRate(playbackRate)
-    }
-
-    return () => {
-      if (sound) {
-        sound.setRateAsync(1, true)
-        setPlaybackRate(1)
-      }
-    }
-  }, [playbackRate])
+  const {
+    isPlaying,
+    togglePlay,
+    handleSeek,
+    handleForward,
+    handleBackward,
+    handleVolumeChange,
+    handleDownload,
+    formatTime,
+    currentTime,
+    duration,
+    volume,
+    expanded,
+    setExpanded,
+    playbackRate,
+    setPlaybackRate
+  } = useAudioPlayer(id, post)
 
   return (
     <View
