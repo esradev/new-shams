@@ -822,7 +822,7 @@ export default function Settings() {
                   •
                 </Text>
                 <View className="flex flex-row-reverse items-center">
-                  <Text className="text-xs text-green-600 dark:text-green-400 mr-1">
+                  <Text className="text-xs text-emerald-600 dark:text-emerald-400 mr-1">
                     دانلود شده
                   </Text>
                   <Download size={10} color="#10B981" />
