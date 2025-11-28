@@ -15,6 +15,8 @@ import { useLocalSearchParams, useNavigation } from "expo-router";
 
 import AudioPlayer from "@/components/audio-player";
 import { colorScheme } from "nativewind";
+import { formatPersianDate, isValidDate } from "@/utils/date-utils";
+import { createHighlightedHTML } from "@/utils/text-highlight";
 
 interface ErrorType {
   message: string;
@@ -36,7 +38,54 @@ export default function LessonPage() {
     postContent,
     postAudioSrc,
     postDate,
+    searchQuery,
   } = useLocalSearchParams();
+
+  // Format the date properly
+  const formattedDate =
+    typeof postDate === "string" && isValidDate(postDate)
+      ? formatPersianDate(postDate)
+      : postDate;
+
+  // Prepare content with search highlighting
+  const processedContent = () => {
+    const content =
+      (Array.isArray(postContent) ? postContent[0] : postContent) ||
+      `<div style="text-align: right; padding: 20px;">
+        <p style="color: #78716c; font-style: italic;">
+          متأسفانه محتوای این جلسه در حال حاضر در دسترس نیست. لطفا بعدا دوباره مراجعه کنید.
+        </p>
+      </div>`;
+
+    if (searchQuery && typeof searchQuery === "string" && searchQuery.trim()) {
+      return createHighlightedHTML(
+        content,
+        searchQuery,
+        colorScheme.get() === "dark",
+      );
+    }
+
+    return content;
+  };
+
+  // Function to highlight text in title
+  const highlightTitle = (title: string, query: string) => {
+    if (!query || !query.trim()) return title;
+
+    const parts = title.split(new RegExp(`(${query})`, "gi"));
+    return parts.map((part, index) => (
+      <Text
+        key={index}
+        className={
+          part.toLowerCase() === query.toLowerCase()
+            ? "text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded"
+            : ""
+        }
+      >
+        {part}
+      </Text>
+    ));
+  };
 
   return (
     <SafeAreaProvider>
@@ -91,7 +140,11 @@ export default function LessonPage() {
 
               {/* Title */}
               <Text className="text-3xl font-bold text-stone-900 dark:text-stone-100 text-right mb-6 leading-relaxed">
-                {postTitle}
+                {searchQuery &&
+                typeof searchQuery === "string" &&
+                searchQuery.trim()
+                  ? highlightTitle(postTitle as string, searchQuery)
+                  : postTitle}
               </Text>
 
               {/* Meta Information */}
@@ -106,10 +159,10 @@ export default function LessonPage() {
                   />
                 </View>
 
-                {postDate && (
+                {formattedDate && (
                   <View className="flex flex-row items-center justify-end gap-3">
                     <Text className="text-base text-stone-600 dark:text-stone-400">
-                      {postDate}
+                      {formattedDate}
                     </Text>
                     <Calendar
                       size={16}
@@ -131,17 +184,19 @@ export default function LessonPage() {
                 <View className="h-px bg-stone-200 dark:bg-stone-700 mt-3" />
               </View>
 
+              {searchQuery &&
+                typeof searchQuery === "string" &&
+                searchQuery.trim() && (
+                  <View className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border-r-4 border-yellow-400 dark:border-yellow-500">
+                    <Text className="text-sm text-yellow-800 dark:text-yellow-200 text-right dir-rtl">
+                      نتایج جستجو برای: "{searchQuery}"
+                    </Text>
+                  </View>
+                )}
+
               <RenderHTML
                 source={{
-                  html:
-                    (Array.isArray(postContent)
-                      ? postContent[0]
-                      : postContent) ||
-                    `<div style="text-align: right; padding: 20px;">
-                        <p style="color: #78716c; font-style: italic;">
-                          متأسفانه محتوای این جلسه در حال حاضر در دسترس نیست. لطفا بعدا دوباره مراجعه کنید.
-                        </p>
-                      </div>`,
+                  html: processedContent(),
                 }}
                 contentWidth={350}
                 baseStyle={{
@@ -209,6 +264,14 @@ export default function LessonPage() {
                       colorScheme.get() === "dark" ? "#292524" : "#f7f7f6",
                     paddingVertical: 16,
                     textAlign: "right",
+                  },
+                  mark: {
+                    backgroundColor:
+                      colorScheme.get() === "dark" ? "#451a03" : "#fef3c7",
+                    color: colorScheme.get() === "dark" ? "#fbbf24" : "#92400e",
+                    padding: 4,
+                    borderRadius: 4,
+                    fontWeight: "600",
                   },
                 }}
               />
