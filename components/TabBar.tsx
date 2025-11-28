@@ -1,64 +1,137 @@
-import { View, StyleSheet } from 'react-native'
-import React from 'react'
-import TabBarButton from './TabBarButton'
+import React from "react";
+import { View, StyleSheet, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColorScheme } from "nativewind";
+import TabBarButton from "./TabBarButton";
 
-interface TabBarProps {
-  state: any
-  descriptors: any
-  navigation: any
-}
+type TabBarProps = {
+  state: any;
+  descriptors: any;
+  navigation: any;
+};
 
 const TabBar = ({ state, descriptors, navigation }: TabBarProps) => {
-  const primaryColor = '#059669'
-  const greyColor = '#737373'
+  const { bottom } = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+
+  const primaryColor = "#059669";
+  const greyColor = "#737373";
+
+  const containerBg =
+    colorScheme === "dark" ? "rgba(28,25,23,0.92)" : "rgba(255,255,255,0.92)";
+  const borderColor = colorScheme === "dark" ? "#44403c" : "#e7e5e4";
+
   return (
-    <View className='absolute bottom-4 z-10 flex-row-reverse justify-between items-center bg-green-50 mx-5 py-2 border border-green-700 rounded-2xl shadow dark:bg-stone-900 dark:border-stone-700'>
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key]
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-            ? options.title
-            : route.name
+    <View
+      pointerEvents="box-none"
+      style={[
+        styles.wrapper,
+        {
+          bottom: Math.max(12, bottom + 8),
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: containerBg,
+            borderColor,
+            shadowColor: "#000",
+          },
+        ]}
+        // @ts-ignore - className supported by nativewind
+        className="flex-row-reverse items-center justify-between"
+      >
+        {state.routes.map((route: any, index: number) => {
+          const descriptor = descriptors[route.key];
+          const options = descriptor?.options ?? {};
 
-        if (['_sitemap', '+not-found'].includes(route.name)) return null
+          // Hide internal/system routes from the tab bar
+          if (["_sitemap", "+not-found"].includes(route.name)) return null;
 
-        const isFocused = state.index === index
+          // Label resolution (support string labels; if provided as function, fallback to title/name)
+          let label =
+            typeof options.tabBarLabel === "string"
+              ? options.tabBarLabel
+              : (options.title ?? route.name);
 
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true
-          })
+          const isFocused = state.index === index;
 
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name, route.params)
-          }
-        }
+          const onPress = () => {
+            const event = navigation.emit({
+              type: "tabPress",
+              target: route.key,
+              canPreventDefault: true,
+            });
 
-        const onLongPress = () => {
-          navigation.emit({
-            type: 'tabLongPress',
-            target: route.key
-          })
-        }
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name, route.params);
+            }
+          };
 
-        return (
-          <TabBarButton
-            key={route.name}
-            onPress={onPress}
-            onLongPress={onLongPress}
-            isFocused={isFocused}
-            routeName={route.name}
-            color={isFocused ? primaryColor : greyColor}
-            label={label}
-          />
-        )
-      })}
+          const onLongPress = () => {
+            navigation.emit({
+              type: "tabLongPress",
+              target: route.key,
+            });
+          };
+
+          // Modern addition: pass optional badge down to the button
+          const badge =
+            options.tabBarBadge ??
+            options.badge ??
+            route.params?.badge ??
+            undefined;
+
+          return (
+            <TabBarButton
+              key={route.key ?? route.name}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              isFocused={isFocused}
+              routeName={route.name}
+              color={isFocused ? primaryColor : greyColor}
+              label={label}
+              // new prop for modernized TabBarButton
+              badge={badge}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isFocused }}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              testID={options.tabBarTestID}
+            />
+          );
+        })}
+      </View>
     </View>
-  )
-}
+  );
+};
 
-export default TabBar
+const styles = StyleSheet.create({
+  wrapper: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    zIndex: 50,
+  },
+  container: {
+    borderWidth: 1,
+    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    // shadows
+    ...Platform.select({
+      ios: {
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 6 },
+      },
+      android: {
+        elevation: 12,
+      },
+      default: {},
+    }),
+  },
+});
+
+export default TabBar;
