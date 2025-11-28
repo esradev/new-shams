@@ -9,6 +9,9 @@ import {
   SectionList,
   FlatList,
 } from "react-native";
+import { router } from "expo-router";
+import * as FileSystem from "expo-file-system";
+import { Platform } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import {
   User,
@@ -28,6 +31,8 @@ import {
   Database,
   ChevronRight,
   Menu,
+  Play,
+  FolderOpen,
 } from "lucide-react-native";
 
 import {
@@ -96,6 +101,20 @@ export default function Settings() {
     loadCacheStats();
   }, [activeSection]);
 
+  // Check if FileSystem is available
+  const isFileSystemAvailable = () => {
+    try {
+      return (
+        Platform.OS !== "web" &&
+        FileSystem &&
+        typeof (FileSystem as any).documentDirectory !== "undefined" &&
+        (FileSystem as any).documentDirectory !== null
+      );
+    } catch (error) {
+      return false;
+    }
+  };
+
   const handleDeleteDownload = async (
     lessonId: string,
     lessonTitle: string,
@@ -110,6 +129,18 @@ export default function Settings() {
           style: "destructive",
           onPress: async () => {
             try {
+              // Remove from device storage
+              if (isFileSystemAvailable()) {
+                const fileName = `audio_${lessonId}.mp3`;
+                const localUri = `${(FileSystem as any).documentDirectory}${fileName}`;
+
+                const fileInfo = await FileSystem.getInfoAsync(localUri);
+                if (fileInfo.exists) {
+                  await FileSystem.deleteAsync(localUri);
+                }
+              }
+
+              // Remove from local storage
               await removeFromDownloads(lessonId);
             } catch (error) {
               Alert.alert("خطا", "مشکلی در حذف فایل پیش آمد");
@@ -140,6 +171,67 @@ export default function Settings() {
         },
       ],
     );
+  };
+
+  const handleClearAllDownloads = () => {
+    Alert.alert(
+      "حذف تمام دانلودها",
+      "آیا می‌خواهید تمام فایل‌های دانلود شده را حذف کنید؟ این عمل غیرقابل بازگشت است.",
+      [
+        { text: "انصراف", style: "cancel" },
+        {
+          text: "حذف همه",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Remove all downloaded files from device storage
+              for (const lesson of downloadedLessons) {
+                try {
+                  if (isFileSystemAvailable()) {
+                    const fileName = `audio_${lesson.id}.mp3`;
+                    const localUri = `${(FileSystem as any).documentDirectory}${fileName}`;
+
+                    const fileInfo = await FileSystem.getInfoAsync(localUri);
+                    if (fileInfo.exists) {
+                      await FileSystem.deleteAsync(localUri);
+                    }
+                  }
+                } catch (error) {
+                  console.error(
+                    `Error deleting file for lesson ${lesson.id}:`,
+                    error,
+                  );
+                }
+              }
+
+              // Clear from local storage
+              for (const lesson of downloadedLessons) {
+                await removeFromDownloads(lesson.id);
+              }
+
+              Alert.alert("موفق", "تمام فایل‌های دانلود شده حذف شدند");
+            } catch (error) {
+              Alert.alert("خطا", "مشکلی در حذف فایل‌ها پیش آمد");
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleOpenLesson = (lesson: DownloadedLesson) => {
+    router.push({
+      pathname: "/lessons/[id]",
+      params: {
+        id: lesson.id,
+        categorayId: lesson.categoryId,
+        categorayName: lesson.categoryName,
+        postTitle: lesson.title,
+        postContent: lesson.content || "",
+        postAudioSrc: lesson.audioUrl || "",
+        postDate: new Date(lesson.downloadedAt).toISOString(),
+      },
+    });
   };
 
   const formatBytes = (bytes: number) => {
@@ -646,9 +738,44 @@ export default function Settings() {
       contentContainerStyle={{ padding: 16 }}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={
-        <Text className="text-2xl font-bold text-gray-900 dark:text-white text-right dir-rtl mb-6">
-          دانلودها
-        </Text>
+        <View>
+          <View className="flex flex-row-reverse items-center justify-between mb-6">
+            <Text className="text-2xl font-bold text-gray-900 dark:text-white text-right dir-rtl">
+              دانلودها ({downloadedLessons.length})
+            </Text>
+            {downloadedLessons.length > 0 && (
+              <Pressable
+                onPress={handleClearAllDownloads}
+                className="bg-red-100 dark:bg-red-900/30 px-3 py-2 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50"
+              >
+                <Text className="text-red-600 dark:text-red-400 text-sm font-medium">
+                  حذف همه
+                </Text>
+              </Pressable>
+            )}
+          </View>
+
+          {downloadedLessons.length > 0 && (
+            <View className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+              <View className="flex flex-row-reverse items-center justify-between">
+                <View>
+                  <Text className="text-blue-900 dark:text-blue-100 font-medium text-right dir-rtl">
+                    مجموع فضای مصرفی
+                  </Text>
+                  <Text className="text-blue-600 dark:text-blue-300 text-sm text-right dir-rtl mt-1">
+                    {formatBytes(
+                      downloadedLessons.reduce(
+                        (total, lesson) => total + (lesson.size || 0),
+                        0,
+                      ),
+                    )}
+                  </Text>
+                </View>
+                <HardDrive size={24} color="#3B82F6" />
+              </View>
+            </View>
+          )}
+        </View>
       }
       ListEmptyComponent={
         <View className="bg-gray-50 dark:bg-gray-800/50 p-8 rounded-xl items-center">
@@ -656,19 +783,27 @@ export default function Settings() {
           <Text className="text-gray-500 dark:text-gray-400 text-center mt-4 text-lg">
             هیچ درسی دانلود نشده است
           </Text>
+          <Text className="text-gray-400 dark:text-gray-500 text-center mt-2 text-sm">
+            {isFileSystemAvailable()
+              ? "برای دانلود درس‌ها، روی دکمه دانلود در صفحه درس کلیک کنید"
+              : "قابلیت دانلود در این پلتفرم پشتیبانی نمی‌شود"}
+          </Text>
         </View>
       }
       renderItem={({ item: lesson }) => (
-        <View className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-3">
+        <Pressable
+          onPress={() => handleOpenLesson(lesson)}
+          className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-3 active:bg-gray-50 dark:active:bg-gray-700"
+        >
           <View className="flex flex-row-reverse items-start justify-between">
             <View className="flex-1">
               <Text className="text-gray-900 dark:text-white font-medium text-right dir-rtl mb-1">
                 {lesson.title}
               </Text>
-              <Text className="text-sm text-emerald-600 dark:text-emerald-400 text-right dir-rtl">
+              <Text className="text-sm text-emerald-600 dark:text-emerald-400 text-right dir-rtl mb-2">
                 {lesson.categoryName}
               </Text>
-              <View className="flex flex-row-reverse items-center mt-2">
+              <View className="flex flex-row-reverse items-center">
                 <Calendar size={12} color="#6B7280" />
                 <Text className="text-xs text-gray-500 dark:text-gray-400 text-right dir-rtl mr-1">
                   {formatPersianDate(lesson.downloadedAt.toString())}
@@ -683,16 +818,33 @@ export default function Settings() {
                     </Text>
                   </>
                 )}
+                <Text className="text-xs text-gray-400 dark:text-gray-500 mx-2">
+                  •
+                </Text>
+                <View className="flex flex-row-reverse items-center">
+                  <Text className="text-xs text-green-600 dark:text-green-400 mr-1">
+                    دانلود شده
+                  </Text>
+                  <Download size={10} color="#10B981" />
+                </View>
               </View>
             </View>
-            <Pressable
-              onPress={() => handleDeleteDownload(lesson.id, lesson.title)}
-              className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 active:scale-95"
-            >
-              <Trash2 size={16} color="#EF4444" />
-            </Pressable>
+            <View className="flex flex-row items-center gap-2">
+              <Pressable
+                onPress={() => handleOpenLesson(lesson)}
+                className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 active:scale-95"
+              >
+                <Play size={16} color="#3B82F6" />
+              </Pressable>
+              <Pressable
+                onPress={() => handleDeleteDownload(lesson.id, lesson.title)}
+                className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 active:scale-95"
+              >
+                <Trash2 size={16} color="#EF4444" />
+              </Pressable>
+            </View>
           </View>
-        </View>
+        </Pressable>
       )}
     />
   );

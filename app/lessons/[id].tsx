@@ -304,6 +304,12 @@ export default function LessonPage() {
             id={id}
             postAudioSrc={postAudioSrc}
             postTitle={postTitle}
+            categoryId={
+              Array.isArray(categorayId) ? categorayId[0] : categorayId
+            }
+            categoryName={
+              Array.isArray(categorayName) ? categorayName[0] : categorayName
+            }
           />
         )}
       </SafeAreaView>

@@ -20,8 +20,14 @@ import { useAudioPlayer } from "@/hooks/use-audio-player";
 
 const AudioPlayer = React.forwardRef<
   View,
-  { id: any; postAudioSrc: any; postTitle: any }
->(({ id, postAudioSrc, postTitle }, ref) => {
+  {
+    id: any;
+    postAudioSrc: any;
+    postTitle: any;
+    categoryId?: string;
+    categoryName?: string;
+  }
+>(({ id, postAudioSrc, postTitle, categoryId, categoryName }, ref) => {
   const {
     isPlaying,
     togglePlay,
@@ -38,7 +44,10 @@ const AudioPlayer = React.forwardRef<
     setExpanded,
     playbackRate,
     setPlaybackRate,
-  } = useAudioPlayer(id, postAudioSrc);
+    isDownloading,
+    isDownloaded,
+    isFileSystemAvailable,
+  } = useAudioPlayer(id, postAudioSrc, postTitle, categoryId, categoryName);
 
   return (
     <View
@@ -99,16 +108,25 @@ const AudioPlayer = React.forwardRef<
 
           {/* Right side - Actions */}
           <View className="flex flex-row items-center gap-x-2">
-            <Pressable
-              onPress={handleDownload}
-              className="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800"
-              aria-label="Download audio"
-            >
-              <Download
-                size={22}
-                className="text-stone-600 dark:text-stone-400"
-              />
-            </Pressable>
+            {isFileSystemAvailable && (
+              <Pressable
+                onPress={handleDownload}
+                className={`p-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 ${
+                  isDownloading ? "opacity-50" : ""
+                }`}
+                aria-label={isDownloaded ? "Remove download" : "Download audio"}
+                disabled={isDownloading}
+              >
+                <Download
+                  size={22}
+                  className={`${
+                    isDownloaded
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-stone-600 dark:text-stone-400"
+                  }`}
+                />
+              </Pressable>
+            )}
 
             <Pressable
               onPress={() => setExpanded(!expanded)}
