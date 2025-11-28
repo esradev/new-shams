@@ -26,6 +26,8 @@ import {
   HardDrive,
   Clock,
   Database,
+  ChevronRight,
+  Menu,
 } from "lucide-react-native";
 
 import {
@@ -37,17 +39,26 @@ import { useCache, CacheStats } from "@/context/cache-context";
 import { formatPersianDate } from "@/utils/date-utils";
 import LoadingSpinner from "@/components/loading-spinner";
 
-type SettingsTab =
+type SettingsSection =
   | "overview"
   | "activities"
   | "downloads"
   | "cache"
   | "preferences";
 
+interface MenuItem {
+  id: SettingsSection;
+  title: string;
+  icon: string;
+  description: string;
+}
+
 export default function Settings() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("overview");
+  const [activeSection, setActiveSection] =
+    useState<SettingsSection>("overview");
   const [refreshing, setRefreshing] = useState(false);
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const {
     completedLessons,
@@ -76,14 +87,14 @@ export default function Settings() {
     }
   };
 
-  // Load cache stats on mount and tab change
+  // Load cache stats on mount and section change
   useEffect(() => {
     const loadCacheStats = async () => {
       const stats = await getCacheStats();
       setCacheStats(stats);
     };
     loadCacheStats();
-  }, [activeTab]);
+  }, [activeSection]);
 
   const handleDeleteDownload = async (
     lessonId: string,
@@ -178,26 +189,144 @@ export default function Settings() {
     }
   };
 
-  const renderTabButton = (
-    tab: SettingsTab,
-    icon: React.ReactNode,
-    title: string,
-  ) => (
+  const menuItems: MenuItem[] = [
+    {
+      id: "overview",
+      title: "خلاصه",
+      icon: "BarChart3",
+      description: "آمار و اطلاعات کلی",
+    },
+    {
+      id: "activities",
+      title: "فعالیت‌ها",
+      icon: "Activity",
+      description: "تاریخچه فعالیت‌های شما",
+    },
+    {
+      id: "downloads",
+      title: "دانلودها",
+      icon: "Download",
+      description: "فایل‌های دانلود شده",
+    },
+    {
+      id: "cache",
+      title: "کش",
+      icon: "Database",
+      description: "مدیریت حافظه کش",
+    },
+    {
+      id: "preferences",
+      title: "تنظیمات",
+      icon: "SettingsIcon",
+      description: "تنظیمات عمومی برنامه",
+    },
+  ];
+
+  const renderMenuItem = (item: MenuItem) => (
     <Pressable
-      onPress={() => setActiveTab(tab)}
-      className={`flex-1 flex flex-row items-center justify-center px-4 py-3 rounded-lg ${
-        activeTab === tab ? "bg-emerald-500" : "bg-gray-200 dark:bg-gray-700"
+      key={item.id}
+      onPress={() => {
+        setActiveSection(item.id);
+        setIsDrawerOpen(false);
+      }}
+      className={`p-4 mx-2 my-1 rounded-xl transition-colors ${
+        activeSection === item.id
+          ? "bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700"
+          : "hover:bg-gray-100 dark:hover:bg-gray-700/50"
       }`}
     >
-      {icon}
-      <Text
-        className={`mr-2 font-medium text-sm ${
-          activeTab === tab ? "text-white" : "text-gray-700 dark:text-gray-300"
-        }`}
-      >
-        {title}
-      </Text>
+      <View className="flex flex-row-reverse items-center justify-between">
+        <View className="flex flex-row-reverse items-center">
+          <View
+            className={`p-2 rounded-lg ${
+              activeSection === item.id
+                ? "bg-emerald-500"
+                : "bg-gray-200 dark:bg-gray-600"
+            }`}
+          >
+            {item.id === "overview" && (
+              <BarChart3
+                size={18}
+                color={activeSection === item.id ? "#fff" : "#6B7280"}
+              />
+            )}
+            {item.id === "activities" && (
+              <Activity
+                size={18}
+                color={activeSection === item.id ? "#fff" : "#6B7280"}
+              />
+            )}
+            {item.id === "downloads" && (
+              <Download
+                size={18}
+                color={activeSection === item.id ? "#fff" : "#6B7280"}
+              />
+            )}
+            {item.id === "cache" && (
+              <Database
+                size={18}
+                color={activeSection === item.id ? "#fff" : "#6B7280"}
+              />
+            )}
+            {item.id === "preferences" && (
+              <SettingsIcon
+                size={18}
+                color={activeSection === item.id ? "#fff" : "#6B7280"}
+              />
+            )}
+          </View>
+          <View className="mr-3">
+            <Text
+              className={`text-base font-semibold text-right dir-rtl ${
+                activeSection === item.id
+                  ? "text-emerald-700 dark:text-emerald-300"
+                  : "text-gray-900 dark:text-white"
+              }`}
+            >
+              {item.title}
+            </Text>
+            <Text className="text-xs text-gray-500 dark:text-gray-400 text-right dir-rtl mt-0.5">
+              {item.description}
+            </Text>
+          </View>
+        </View>
+        {activeSection === item.id && (
+          <View className="bg-emerald-500 rounded-full p-1">
+            <ChevronRight size={12} color="#fff" />
+          </View>
+        )}
+      </View>
     </Pressable>
+  );
+
+  const renderSidebar = () => (
+    <View className="w-80 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-xl">
+      <View className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-b from-emerald-50 to-white dark:from-emerald-900/20 dark:to-gray-800">
+        <View className="flex flex-row-reverse items-center justify-between mb-3">
+          <View>
+            <Text className="text-2xl font-bold text-gray-900 dark:text-white text-right dir-rtl">
+              تنظیمات
+            </Text>
+            <View className="w-8 h-1 bg-emerald-500 rounded-full mt-1"></View>
+          </View>
+          {isDrawerOpen && (
+            <Pressable
+              onPress={() => setIsDrawerOpen(false)}
+              className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 md:hidden"
+              hitSlop={8}
+            >
+              <ChevronRight size={18} color="#6B7280" />
+            </Pressable>
+          )}
+        </View>
+        <Text className="text-sm text-gray-600 dark:text-gray-300 text-right dir-rtl">
+          مدیریت برنامه و حساب کاربری
+        </Text>
+      </View>
+      <ScrollView showsVerticalScrollIndicator={false} className="flex-1 p-2">
+        {menuItems.map(renderMenuItem)}
+      </ScrollView>
+    </View>
   );
 
   const renderOverview = () => (
@@ -651,58 +780,52 @@ export default function Settings() {
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
-        {/* Tab Navigation */}
-        <View className="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <View className="flex flex-row gap-2">
-            {renderTabButton(
-              "overview",
-              <BarChart3
-                size={16}
-                color={activeTab === "overview" ? "#fff" : "#6B7280"}
-              />,
-              "خلاصه",
-            )}
-            {renderTabButton(
-              "activities",
-              <Activity
-                size={16}
-                color={activeTab === "activities" ? "#fff" : "#6B7280"}
-              />,
-              "فعالیت‌ها",
-            )}
-            {renderTabButton(
-              "downloads",
-              <Download
-                size={16}
-                color={activeTab === "downloads" ? "#fff" : "#6B7280"}
-              />,
-              "دانلودها",
-            )}
-            {renderTabButton(
-              "cache",
-              <Database
-                size={16}
-                color={activeTab === "cache" ? "#fff" : "#6B7280"}
-              />,
-              "کش",
-            )}
-            {renderTabButton(
-              "preferences",
-              <SettingsIcon
-                size={16}
-                color={activeTab === "preferences" ? "#fff" : "#6B7280"}
-              />,
-              "تنظیمات",
-            )}
+        <View className="flex-1 flex-row-reverse">
+          {/* Desktop Sidebar - Hidden on mobile */}
+          <View className="hidden md:flex">{renderSidebar()}</View>
+
+          {/* Main Content */}
+          <View className="flex-1">
+            {/* Header */}
+            <View className="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+              <View className="flex flex-row-reverse items-center justify-between">
+                <Pressable
+                  onPress={() => setIsDrawerOpen(true)}
+                  className="flex flex-row align-middle gap-2 p-2 bg-stone-100 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 md:hidden"
+                  hitSlop={8}
+                >
+                  <Menu size={20} color="#6B7280" />
+                  <Text className="text-gray-700">منوی تنظیمات</Text>
+                </Pressable>
+                <Text className="text-lg font-semibold text-gray-900 dark:text-white text-right dir-rtl">
+                  {menuItems.find((item) => item.id === activeSection)?.title}
+                </Text>
+              </View>
+            </View>
+
+            {/* Content Area */}
+            <View className="flex-1">
+              {activeSection === "overview" && renderOverview()}
+              {activeSection === "activities" && renderActivities()}
+              {activeSection === "downloads" && renderDownloads()}
+              {activeSection === "cache" && renderCache()}
+              {activeSection === "preferences" && renderPreferences()}
+            </View>
           </View>
         </View>
 
-        {/* Tab Content */}
-        {activeTab === "overview" && renderOverview()}
-        {activeTab === "activities" && renderActivities()}
-        {activeTab === "downloads" && renderDownloads()}
-        {activeTab === "cache" && renderCache()}
-        {activeTab === "preferences" && renderPreferences()}
+        {/* Mobile Drawer Overlay */}
+        {isDrawerOpen && (
+          <View className="absolute inset-0 z-50 md:hidden">
+            <Pressable
+              onPress={() => setIsDrawerOpen(false)}
+              className="absolute inset-0 bg-black/50"
+            />
+            <View className="absolute right-0 top-0 bottom-0 w-80">
+              {renderSidebar()}
+            </View>
+          </View>
+        )}
       </SafeAreaView>
     </SafeAreaProvider>
   );
