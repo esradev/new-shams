@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "new-shams",
-    "slug": "new-shams",
+    "name": "شمس",
+    "slug": "shams",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ir.wpstorm.newshams",
+      "bundleIdentifier": "ir.wpstorm.shams",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "ir.wpstorm.newshams"
+      "package": "ir.wpstorm.shams"
     },
     "web": {
       "bundler": "metro",
@@ -35,7 +35,13 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "image": "./assets/images/splash-icon.png",
+            "imageWidth": 200,
+            "resizeMode": "contain",
+            "backgroundColor": "#000000"
+          }
         }
       ],
       "expo-asset"
