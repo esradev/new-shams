@@ -16,6 +16,7 @@ import SearchResultCard from "@/components/search-result-card";
 import { useApi } from "@/context/api-context";
 import { usePostsByCategory } from "@/hooks/use-posts-by-category";
 import { useSearch } from "@/hooks/use-search";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { formatPersianDate, isValidDate } from "@/utils/date-utils";
 
 const Categories = () => {
@@ -26,6 +27,7 @@ const Categories = () => {
   const [isSearching, setIsSearching] = useState(false);
 
   const category = categories.find((cat) => cat.id === Number(id));
+  const { isLessonCompleted } = useLocalStorage();
 
   const { posts, loading, error, page, totalPages, setPage } =
     usePostsByCategory(id);
@@ -248,7 +250,11 @@ const Categories = () => {
                       </View>
                       <View className="flex-1">
                         <Text
-                          className={`text-lg font-medium text-right dir-rtl`}
+                          className={`text-lg font-medium text-right dir-rtl ${
+                            isLessonCompleted(lesson.id.toString())
+                              ? "text-emerald-700 dark:text-emerald-400"
+                              : ""
+                          }`}
                         >
                           {lesson?.title?.rendered}
                         </Text>
@@ -256,8 +262,8 @@ const Categories = () => {
                           {lesson?.duration || "00:00"}
                         </Text>
                       </View>
-                      {lesson?.completed && (
-                        <View className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                      {isLessonCompleted(lesson.id.toString()) && (
+                        <View className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
                           <Check size={16} color="#fff" />
                         </View>
                       )}

@@ -14,6 +14,7 @@ import RenderHTML from "react-native-render-html";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 
 import AudioPlayer from "@/components/audio-player";
+import LessonActions from "@/components/lesson-actions";
 import { colorScheme } from "nativewind";
 import { formatPersianDate, isValidDate } from "@/utils/date-utils";
 import { createHighlightedHTML } from "@/utils/text-highlight";
@@ -276,6 +277,21 @@ export default function LessonPage() {
                 }}
               />
             </View>
+          </View>
+
+          {/* Lesson Actions */}
+          <View className="mt-6">
+            <LessonActions
+              lessonId={id as string}
+              lessonTitle={postTitle as string}
+              categoryId={categorayId as string}
+              categoryName={categorayName as string}
+              content={
+                (Array.isArray(postContent) ? postContent[0] : postContent) ||
+                ""
+              }
+              audioUrl={postAudioSrc as string}
+            />
           </View>
 
           {/* Spacing for bottom content */}

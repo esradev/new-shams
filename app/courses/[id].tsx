@@ -1,17 +1,19 @@
 import { Text, ScrollView, View, Pressable } from "react-native";
 import { useLocalSearchParams, Link, router } from "expo-router";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import { ChevronLeft } from "lucide-react-native";
+import { ChevronLeft, Check } from "lucide-react-native";
 
 import Pagination from "@/components/pagination";
 import LoadingSpinner from "@/components/loading-spinner";
 import { useApi } from "@/context/api-context";
 import { usePostsByCategory } from "@/hooks/use-posts-by-category";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { formatPersianDate, isValidDate } from "@/utils/date-utils";
 
 const CategoryPosts = () => {
   const { id } = useLocalSearchParams();
   const { categories } = useApi();
+  const { isLessonCompleted } = useLocalStorage();
 
   const category = categories.find((cat) => cat.id === Number(id));
 
@@ -91,20 +93,32 @@ const CategoryPosts = () => {
                             <Text>{index + 1}</Text>
                           </View>
                           <View className="flex-1">
-                            <Text className="text-lg font-medium text-right dir-rtl text-gray-800 dark:text-gray-200">
+                            <Text
+                              className={`text-lg font-medium text-right dir-rtl ${
+                                isLessonCompleted(lesson.id.toString())
+                                  ? "text-emerald-700 dark:text-emerald-400"
+                                  : "text-gray-800 dark:text-gray-200"
+                              }`}
+                            >
                               {lesson?.title?.rendered}
                             </Text>
                             <Text className="text-base text-gray-500 dark:text-gray-500 text-right dir-rtl">
                               {lesson?.duration || "00:00"}
                             </Text>
                           </View>
-                          <View className="flwx items-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-full">
-                            <ChevronLeft
-                              size={16}
-                              color="gray"
-                              className="mr-2"
-                            />
-                          </View>
+                          {isLessonCompleted(lesson.id.toString()) ? (
+                            <View className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center mr-3">
+                              <Check size={16} color="#fff" />
+                            </View>
+                          ) : (
+                            <View className="flwx items-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/50 p-1 rounded-full">
+                              <ChevronLeft
+                                size={16}
+                                color="gray"
+                                className="mr-2"
+                              />
+                            </View>
+                          )}
                         </Pressable>
                       </Link>
                     ))}

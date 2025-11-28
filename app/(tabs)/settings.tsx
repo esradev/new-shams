@@ -1,19 +1,536 @@
-import React, { useState } from 'react'
-import { View, Text, ScrollView, StatusBar } from 'react-native'
-import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Alert,
+  RefreshControl,
+  SectionList,
+  FlatList,
+} from "react-native";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import {
+  User,
+  Activity,
+  Download,
+  Trash2,
+  Heart,
+  CheckCircle,
+  Calendar,
+  BarChart3,
+  Settings as SettingsIcon,
+  Moon,
+  Sun,
+  Info,
+  HardDrive,
+  Clock,
+} from "lucide-react-native";
+
+import {
+  useLocalStorage,
+  UserActivity,
+  DownloadedLesson,
+} from "@/hooks/use-local-storage";
+import { formatPersianDate } from "@/utils/date-utils";
+
+type SettingsTab = "overview" | "activities" | "downloads" | "preferences";
 
 export default function Settings() {
+  const [activeTab, setActiveTab] = useState<SettingsTab>("overview");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const {
+    completedLessons,
+    favoriteLessons,
+    downloadedLessons,
+    userActivities,
+    loading,
+    getStatistics,
+    removeFromDownloads,
+    clearAllData,
+    loadAllData,
+  } = useLocalStorage();
+
+  const stats = getStatistics();
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadAllData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleDeleteDownload = async (
+    lessonId: string,
+    lessonTitle: string,
+  ) => {
+    Alert.alert(
+      "حذف دانلود",
+      `آیا می‌خواهید "${lessonTitle}" را از دانلودها حذف کنید؟`,
+      [
+        { text: "انصراف", style: "cancel" },
+        {
+          text: "حذف",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await removeFromDownloads(lessonId);
+            } catch (error) {
+              Alert.alert("خطا", "مشکلی در حذف فایل پیش آمد");
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleClearAllData = () => {
+    Alert.alert(
+      "حذف تمام اطلاعات",
+      "آیا می‌خواهید تمام اطلاعات (تکمیل شده‌ها، علاقه‌مندی‌ها، دانلودها و فعالیت‌ها) را حذف کنید؟ این عمل غیرقابل بازگشت است.",
+      [
+        { text: "انصراف", style: "cancel" },
+        {
+          text: "حذف همه",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await clearAllData();
+              Alert.alert("موفق", "تمام اطلاعات حذف شد");
+            } catch (error) {
+              Alert.alert("خطا", "مشکلی در حذف اطلاعات پیش آمد");
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return "0 بایت";
+    const k = 1024;
+    const sizes = ["بایت", "کیلوبایت", "مگابایت", "گیگابایت"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const formatActivityTime = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days} روز پیش`;
+    if (hours > 0) return `${hours} ساعت پیش`;
+    if (minutes > 0) return `${minutes} دقیقه پیش`;
+    return "همین الان";
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "completed":
+        return <CheckCircle size={16} color="#10B981" />;
+      case "favorited":
+        return <Heart size={16} color="#EC4899" />;
+      case "downloaded":
+        return <Download size={16} color="#3B82F6" />;
+      default:
+        return <Activity size={16} color="#6B7280" />;
+    }
+  };
+
+  const getActivityText = (type: string) => {
+    switch (type) {
+      case "completed":
+        return "تکمیل شد";
+      case "favorited":
+        return "به علاقه‌مندی‌ها اضافه شد";
+      case "downloaded":
+        return "دانلود شد";
+      default:
+        return "فعالیت";
+    }
+  };
+
+  const renderTabButton = (
+    tab: SettingsTab,
+    icon: React.ReactNode,
+    title: string,
+  ) => (
+    <Pressable
+      onPress={() => setActiveTab(tab)}
+      className={`flex-1 flex flex-row items-center justify-center px-4 py-3 rounded-lg ${
+        activeTab === tab ? "bg-emerald-500" : "bg-gray-200 dark:bg-gray-700"
+      }`}
+    >
+      {icon}
+      <Text
+        className={`mr-2 font-medium text-sm ${
+          activeTab === tab ? "text-white" : "text-gray-700 dark:text-gray-300"
+        }`}
+      >
+        {title}
+      </Text>
+    </Pressable>
+  );
+
+  const renderOverview = () => (
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      {/* Statistics Cards */}
+      <View className="px-4 py-6 space-y-4">
+        <Text className="text-2xl font-bold text-gray-900 dark:text-white text-right dir-rtl mb-4">
+          آمار کلی
+        </Text>
+
+        <View className="grid grid-cols-2 gap-4">
+          <View className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800">
+            <View className="flex flex-row-reverse items-center justify-between">
+              <CheckCircle size={24} color="#10B981" />
+              <View className="flex-1">
+                <Text className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 text-right">
+                  {stats.totalCompleted}
+                </Text>
+                <Text className="text-sm text-emerald-600 dark:text-emerald-500 text-right">
+                  درس تکمیل شده
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View className="bg-pink-50 dark:bg-pink-900/20 p-4 rounded-xl border border-pink-200 dark:border-pink-800">
+            <View className="flex flex-row-reverse items-center justify-between">
+              <Heart size={24} color="#EC4899" />
+              <View className="flex-1">
+                <Text className="text-2xl font-bold text-pink-700 dark:text-pink-400 text-right">
+                  {stats.totalFavorites}
+                </Text>
+                <Text className="text-sm text-pink-600 dark:text-pink-500 text-right">
+                  علاقه‌مندی
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+            <View className="flex flex-row-reverse items-center justify-between">
+              <Download size={24} color="#3B82F6" />
+              <View className="flex-1">
+                <Text className="text-2xl font-bold text-blue-700 dark:text-blue-400 text-right">
+                  {stats.totalDownloads}
+                </Text>
+                <Text className="text-sm text-blue-600 dark:text-blue-500 text-right">
+                  دانلود شده
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+            <View className="flex flex-row-reverse items-center justify-between">
+              <HardDrive size={24} color="#6B7280" />
+              <View className="flex-1">
+                <Text className="text-lg font-bold text-gray-700 dark:text-gray-300 text-right">
+                  {formatBytes(stats.totalDownloadSize)}
+                </Text>
+                <Text className="text-sm text-gray-600 dark:text-gray-400 text-right">
+                  فضای مصرفی
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Recent Activities */}
+        <View className="mt-6">
+          <Text className="text-xl font-semibold text-gray-900 dark:text-white text-right dir-rtl mb-4">
+            فعالیت‌های اخیر
+          </Text>
+          {stats.recentActivities.length === 0 ? (
+            <View className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl text-center">
+              <Text className="text-gray-500 dark:text-gray-400 text-center">
+                هیچ فعالیتی ثبت نشده است
+              </Text>
+            </View>
+          ) : (
+            <View className="space-y-2">
+              {stats.recentActivities
+                .slice(0, 5)
+                .map((activity: UserActivity) => (
+                  <View
+                    key={activity.id}
+                    className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700"
+                  >
+                    <View className="flex flex-row-reverse items-center">
+                      {getActivityIcon(activity.type)}
+                      <View className="flex-1 mr-3">
+                        <Text className="text-gray-900 dark:text-white font-medium text-right dir-rtl">
+                          {activity.lessonTitle}
+                        </Text>
+                        <Text className="text-sm text-gray-500 dark:text-gray-400 text-right dir-rtl">
+                          {getActivityText(activity.type)} •{" "}
+                          {formatActivityTime(activity.timestamp)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          )}
+        </View>
+      </View>
+    </ScrollView>
+  );
+
+  const renderActivities = () => (
+    <FlatList
+      data={userActivities}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={{ padding: 16 }}
+      showsVerticalScrollIndicator={false}
+      ListHeaderComponent={
+        <Text className="text-2xl font-bold text-gray-900 dark:text-white text-right dir-rtl mb-6">
+          تمام فعالیت‌ها
+        </Text>
+      }
+      ListEmptyComponent={
+        <View className="bg-gray-50 dark:bg-gray-800/50 p-8 rounded-xl items-center">
+          <Activity size={48} color="#9CA3AF" />
+          <Text className="text-gray-500 dark:text-gray-400 text-center mt-4 text-lg">
+            هیچ فعالیتی ثبت نشده است
+          </Text>
+        </View>
+      }
+      renderItem={({ item: activity }) => (
+        <View className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-3">
+          <View className="flex flex-row-reverse items-start">
+            {getActivityIcon(activity.type)}
+            <View className="flex-1 mr-3">
+              <Text className="text-gray-900 dark:text-white font-medium text-right dir-rtl mb-1">
+                {activity.lessonTitle}
+              </Text>
+              <Text className="text-sm text-emerald-600 dark:text-emerald-400 text-right dir-rtl">
+                {activity.categoryName}
+              </Text>
+              <View className="flex flex-row-reverse items-center mt-2">
+                <Clock size={12} color="#6B7280" />
+                <Text className="text-xs text-gray-500 dark:text-gray-400 text-right dir-rtl mr-1">
+                  {formatActivityTime(activity.timestamp)}
+                </Text>
+                <Text className="text-xs text-gray-400 dark:text-gray-500 mx-2">
+                  •
+                </Text>
+                <Text className="text-xs text-gray-500 dark:text-gray-400 text-right dir-rtl">
+                  {getActivityText(activity.type)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+    />
+  );
+
+  const renderDownloads = () => (
+    <FlatList
+      data={downloadedLessons}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={{ padding: 16 }}
+      showsVerticalScrollIndicator={false}
+      ListHeaderComponent={
+        <Text className="text-2xl font-bold text-gray-900 dark:text-white text-right dir-rtl mb-6">
+          دانلودها
+        </Text>
+      }
+      ListEmptyComponent={
+        <View className="bg-gray-50 dark:bg-gray-800/50 p-8 rounded-xl items-center">
+          <Download size={48} color="#9CA3AF" />
+          <Text className="text-gray-500 dark:text-gray-400 text-center mt-4 text-lg">
+            هیچ درسی دانلود نشده است
+          </Text>
+        </View>
+      }
+      renderItem={({ item: lesson }) => (
+        <View className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-3">
+          <View className="flex flex-row-reverse items-start justify-between">
+            <View className="flex-1">
+              <Text className="text-gray-900 dark:text-white font-medium text-right dir-rtl mb-1">
+                {lesson.title}
+              </Text>
+              <Text className="text-sm text-emerald-600 dark:text-emerald-400 text-right dir-rtl">
+                {lesson.categoryName}
+              </Text>
+              <View className="flex flex-row-reverse items-center mt-2">
+                <Calendar size={12} color="#6B7280" />
+                <Text className="text-xs text-gray-500 dark:text-gray-400 text-right dir-rtl mr-1">
+                  {formatPersianDate(lesson.downloadedAt.toString())}
+                </Text>
+                {lesson.size && (
+                  <>
+                    <Text className="text-xs text-gray-400 dark:text-gray-500 mx-2">
+                      •
+                    </Text>
+                    <Text className="text-xs text-gray-500 dark:text-gray-400">
+                      {formatBytes(lesson.size)}
+                    </Text>
+                  </>
+                )}
+              </View>
+            </View>
+            <Pressable
+              onPress={() => handleDeleteDownload(lesson.id, lesson.title)}
+              className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 active:scale-95"
+            >
+              <Trash2 size={16} color="#EF4444" />
+            </Pressable>
+          </View>
+        </View>
+      )}
+    />
+  );
+
+  const renderPreferences = () => (
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <View className="px-4 py-6">
+        <Text className="text-2xl font-bold text-gray-900 dark:text-white text-right dir-rtl mb-6">
+          تنظیمات
+        </Text>
+
+        {/* App Info */}
+        <View className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-4">
+          <View className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <View className="flex flex-row-reverse items-center">
+              <Info size={20} color="#6B7280" />
+              <Text className="text-lg font-semibold text-gray-900 dark:text-white mr-3">
+                اطلاعات برنامه
+              </Text>
+            </View>
+          </View>
+          <View className="p-4 space-y-3">
+            <View className="flex flex-row-reverse items-center justify-between">
+              <Text className="text-gray-900 dark:text-white">نسخه برنامه</Text>
+              <Text className="text-gray-500 dark:text-gray-400">1.0.0</Text>
+            </View>
+            <View className="flex flex-row-reverse items-center justify-between">
+              <Text className="text-gray-900 dark:text-white">
+                تعداد کل دروس
+              </Text>
+              <Text className="text-gray-500 dark:text-gray-400">
+                {stats.totalCompleted + stats.totalFavorites}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Data Management */}
+        <View className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+          <View className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <View className="flex flex-row-reverse items-center">
+              <HardDrive size={20} color="#6B7280" />
+              <Text className="text-lg font-semibold text-gray-900 dark:text-white mr-3">
+                مدیریت داده‌ها
+              </Text>
+            </View>
+          </View>
+          <View className="p-4">
+            <Pressable
+              onPress={handleClearAllData}
+              className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 active:scale-98"
+            >
+              <View className="flex flex-row-reverse items-center justify-center">
+                <Trash2 size={20} color="#EF4444" />
+                <Text className="text-red-600 dark:text-red-400 font-medium mr-3">
+                  حذف تمام داده‌ها
+                </Text>
+              </View>
+              <Text className="text-sm text-red-500 dark:text-red-400 text-center mt-2">
+                شامل تکمیل شده‌ها، علاقه‌مندی‌ها و دانلودها
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900 items-center justify-center">
+          <Text className="text-gray-500 dark:text-gray-400">
+            در حال بارگذاری...
+          </Text>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
-      <SafeAreaView className='flex flex-1'>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View className='p-6'>
-            <Text className='flex items-center align-middle text-black'>
-              تنظیمات
-            </Text>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
+        {/* Tab Navigation */}
+        <View className="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <View className="flex flex-row gap-2">
+            {renderTabButton(
+              "overview",
+              <BarChart3
+                size={16}
+                color={activeTab === "overview" ? "#fff" : "#6B7280"}
+              />,
+              "خلاصه",
+            )}
+            {renderTabButton(
+              "activities",
+              <Activity
+                size={16}
+                color={activeTab === "activities" ? "#fff" : "#6B7280"}
+              />,
+              "فعالیت‌ها",
+            )}
+            {renderTabButton(
+              "downloads",
+              <Download
+                size={16}
+                color={activeTab === "downloads" ? "#fff" : "#6B7280"}
+              />,
+              "دانلودها",
+            )}
+            {renderTabButton(
+              "preferences",
+              <SettingsIcon
+                size={16}
+                color={activeTab === "preferences" ? "#fff" : "#6B7280"}
+              />,
+              "تنظیمات",
+            )}
           </View>
-        </ScrollView>
+        </View>
+
+        {/* Tab Content */}
+        {activeTab === "overview" && renderOverview()}
+        {activeTab === "activities" && renderActivities()}
+        {activeTab === "downloads" && renderDownloads()}
+        {activeTab === "preferences" && renderPreferences()}
       </SafeAreaView>
     </SafeAreaProvider>
-  )
+  );
 }
