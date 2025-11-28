@@ -28,10 +28,7 @@ export function useAudioPlayerHook(
   const audioSource = fileUri || postAudioSrc || null;
 
   // Create audio player with expo-audio
-  const player = useAudioPlayer(audioSource, {
-    updateInterval: 500,
-    shouldPlayInBackground: true,
-  });
+  const player = useAudioPlayer(audioSource);
 
   // Get real-time player status
   const status = useAudioPlayerStatus(player);
@@ -60,10 +57,16 @@ export function useAudioPlayerHook(
     }
   }, [player, status.isLoaded, volume]);
 
-  // Set playback rate
+  // Set playback rate with preservesPitch to maintain audio quality
   useEffect(() => {
     if (player && status.isLoaded) {
-      player.setPlaybackRate(playbackRate);
+      try {
+        // Always correct pitch
+        player.shouldCorrectPitch = true;
+        player.setPlaybackRate(playbackRate);
+      } catch (error) {
+        player.setPlaybackRate(playbackRate);
+      }
     }
   }, [player, status.isLoaded, playbackRate]);
 
@@ -424,12 +427,28 @@ export function useAudioPlayerHook(
     setPlaybackRate: useCallback(
       (rate: number) => {
         setPlaybackRate(rate);
-        if (player && status.isLoaded) {
+        if (player && status?.isLoaded) {
+          player.shouldCorrectPitch = true;
           player.setPlaybackRate(rate);
         }
       },
       [player, status.isLoaded],
     ),
+
+    // Handle playback rate cycling through predefined values
+    handlePlaybackRateToggle: useCallback(() => {
+      const rates = [0.75, 1, 1.25, 1.5, 2];
+      const currentIndex = rates.indexOf(playbackRate);
+      const nextIndex = (currentIndex + 1) % rates.length;
+      const nextRate = rates[nextIndex];
+
+      setPlaybackRate(nextRate);
+
+      if (player && status?.isLoaded) {
+        player.shouldCorrectPitch = true;
+        player.setPlaybackRate(nextRate);
+      }
+    }, [playbackRate, player, status?.isLoaded]),
 
     // Download state
     postAudioSrc,

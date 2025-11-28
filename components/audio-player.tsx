@@ -11,6 +11,7 @@ import {
   Maximize2,
   ChevronsLeft,
   ChevronsRight,
+  Gauge,
 } from "lucide-react-native";
 
 import { useAudioPlayer } from "@/hooks/use-audio-player";
@@ -41,6 +42,7 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
       setExpanded,
       playbackRate,
       setPlaybackRate,
+      handlePlaybackRateToggle,
       isDownloading,
       isDownloaded,
       isFileSystemAvailable,
@@ -55,7 +57,7 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
           left: 0,
           bottom: 0,
           right: 0,
-          height: expanded ? 208 : 96,
+          height: expanded ? 208 : 104,
           backgroundColor: "white",
           borderTopWidth: 1,
           borderTopColor: "#A7F3D0",
@@ -147,28 +149,6 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
               </Pressable>
             </View>
 
-            {/* Center - Track info */}
-            <View className="flex-1 mx-4">
-              <Text
-                className="text-emerald-900 dark:text-emerald-100 font-semibold text-center text-base"
-                numberOfLines={1}
-                style={{
-                  textShadowColor: "rgba(0,0,0,0.1)",
-                  textShadowOffset: { width: 0, height: 1 },
-                  textShadowRadius: 2,
-                }}
-              >
-                {postTitle || "در حال پخش..."}
-              </Text>
-              <Text className="text-emerald-600 dark:text-emerald-400 text-sm text-center mt-1">
-                {isBuffering
-                  ? "در حال بارگذاری..."
-                  : isLoaded
-                    ? "آماده پخش"
-                    : "در حال آماده‌سازی..."}
-              </Text>
-            </View>
-
             {/* Right side - Actions */}
             <View className="flex flex-row items-center gap-x-3">
               {isFileSystemAvailable && (
@@ -238,7 +218,7 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
           </View>
 
           {/* Progress bar */}
-          <View className="pb-3 px-2">
+          <View className="pb-3 px-2 mt-2">
             <View className="flex flex-row items-center gap-x-3">
               <Text className="text-xs text-emerald-700 dark:text-emerald-300 min-w-12 text-center font-medium">
                 {formatTime(currentTime)}
@@ -253,15 +233,6 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
                 minimumTrackTintColor="#10B981"
                 maximumTrackTintColor="#D1D5DB"
                 thumbTintColor="#047857"
-                thumbStyle={{
-                  width: 16,
-                  height: 16,
-                  shadowColor: "#047857",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 4,
-                  elevation: 3,
-                }}
               />
               <Text className="text-xs text-emerald-700 dark:text-emerald-300 min-w-12 text-center font-medium">
                 {formatTime(duration)}
@@ -271,7 +242,7 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
 
           {/* Expanded view */}
           {expanded && (
-            <View className="flex flex-1 border-t border-emerald-200 dark:border-emerald-700 pt-4 pb-3">
+            <View className="flex flex-1 pt-4 pb-3">
               <View className="flex flex-row items-center justify-around">
                 {/* Volume Control */}
                 <View className="flex flex-col items-center gap-y-3">
@@ -281,7 +252,7 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
                   <View className="flex flex-row items-center gap-x-3">
                     <Volume2 size={18} color="#047857" />
                     <Slider
-                      style={{ width: 80, height: 24 }}
+                      style={{ width: 120, height: 24 }}
                       minimumValue={0}
                       maximumValue={1}
                       step={0.01}
@@ -302,88 +273,30 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
                   <Text className="text-emerald-800 dark:text-emerald-200 text-sm font-medium">
                     سرعت پخش
                   </Text>
-                  <View className="flex flex-row gap-x-2">
-                    {[0.75, 1, 1.25, 1.5, 2].map((rate) => (
-                      <Pressable
-                        key={rate}
-                        onPress={() => setPlaybackRate(rate)}
-                        style={{
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                          borderRadius: 12,
-                          backgroundColor:
-                            playbackRate === rate ? "#10B981" : "#ECFDF5",
-                          borderWidth: playbackRate === rate ? 0 : 1,
-                          borderColor: "#A7F3D0",
-                          shadowColor:
-                            playbackRate === rate ? "#047857" : undefined,
-                          shadowOffset:
-                            playbackRate === rate
-                              ? { width: 0, height: 2 }
-                              : undefined,
-                          shadowOpacity:
-                            playbackRate === rate ? 0.2 : undefined,
-                          shadowRadius: playbackRate === rate ? 4 : undefined,
-                          elevation: playbackRate === rate ? 3 : undefined,
-                        }}
-                        className={
-                          playbackRate === rate
-                            ? ""
-                            : "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700"
-                        }
-                      >
-                        <Text
-                          className={`text-sm font-semibold ${
-                            playbackRate === rate
-                              ? "text-white"
-                              : "text-emerald-800 dark:text-emerald-200"
-                          }`}
-                        >
-                          {rate}×
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-
-                {/* Audio Quality Indicator */}
-                <View className="flex flex-col items-center gap-y-3">
-                  <Text className="text-emerald-800 dark:text-emerald-200 text-sm font-medium">
-                    وضعیت
-                  </Text>
-                  <View className="flex items-center gap-y-2">
-                    <View
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 6,
-                        backgroundColor: isLoaded
-                          ? "#10B981"
-                          : isBuffering
-                            ? "#10B981"
-                            : "#EF4444",
-                      }}
-                    />
-                    <Text className="text-xs text-emerald-600 dark:text-emerald-400 text-center">
-                      {isLoaded
-                        ? "آماده"
-                        : isBuffering
-                          ? "بارگذاری"
-                          : "در انتظار"}
+                  <Pressable
+                    onPress={handlePlaybackRateToggle}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      borderRadius: 12,
+                      backgroundColor: "#10B981",
+                      borderWidth: 0,
+                      shadowColor: "#047857",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 4,
+                      elevation: 3,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Gauge size={18} color="white" />
+                    <Text className="text-white text-sm font-semibold">
+                      {playbackRate}×
                     </Text>
-                  </View>
+                  </Pressable>
                 </View>
-              </View>
-
-              {/* Islamic decoration */}
-              <View className="mt-4 flex items-center">
-                <View
-                  style={{ height: 1, width: 128 }}
-                  className="bg-gradient-to-r from-transparent via-emerald-400 dark:via-emerald-500 to-transparent opacity-60"
-                />
-                <Text className="text-emerald-600 dark:text-emerald-400 text-xs mt-2">
-                  ☪️ بسم الله الرحمن الرحیم ☪️
-                </Text>
               </View>
             </View>
           )}
