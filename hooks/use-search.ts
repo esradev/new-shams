@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { PostType } from "./use-posts-by-category";
+import { useCache } from "@/context/cache-context";
 
 export interface SearchParams {
   query: string;
@@ -15,6 +16,7 @@ export const useSearch = () => {
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
+  const { fetchWithCache } = useCache();
 
   const search = async (params: SearchParams) => {
     if (!params.query.trim()) {
@@ -39,11 +41,15 @@ export const useSearch = () => {
         searchParams.append("categories", params.categories.join(","));
       }
 
-      const response = await axios.get(
-        `https://shams-almaarif.com/wp-json/wp/v2/posts?${searchParams.toString()}&_embed=wp:term`,
-      );
+      const url = `https://shams-almaarif.com/wp-json/wp/v2/posts?${searchParams.toString()}&_embed=wp:term`;
 
-      setPosts(response.data);
+      // For search, use shorter cache time (3 minutes) since search results may change more frequently
+      const data = await fetchWithCache(url, { maxAge: 3 * 60 * 1000 });
+
+      // We still need to get headers for pagination info, so make the actual request
+      const response = await axios.get(url);
+
+      setPosts(data);
       setTotalPages(Number(response.headers["x-wp-totalpages"] || 1));
       setTotalResults(Number(response.headers["x-wp-total"] || 0));
     } catch (err: any) {
