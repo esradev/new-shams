@@ -1,4 +1,5 @@
-import React, { createContext, useContext } from "react";
+import React from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 
 import { ApiProvider } from "@/context/api-context";
@@ -10,19 +11,21 @@ export default function RootLayout() {
   return (
     <CacheProvider>
       <ApiProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <SafeAreaProvider>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-          <Stack.Screen
-            name="lessons/[id]"
-            options={{ header: () => <Header /> }}
-          />
-          <Stack.Screen
-            name="categories/[id]"
-            options={{ header: () => <Header /> }}
-          />
-          <Stack.Screen name="+not-found" />
-        </Stack>
+            <Stack.Screen
+              name="lessons/[id]"
+              options={{ header: () => <Header /> }}
+            />
+            <Stack.Screen
+              name="categories/[id]"
+              options={{ header: () => <Header /> }}
+            />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </SafeAreaProvider>
       </ApiProvider>
     </CacheProvider>
   );

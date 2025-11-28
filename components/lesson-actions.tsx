@@ -189,13 +189,6 @@ const LessonActions: React.FC<LessonActionsProps> = ({
           ) : (
             <Heart size={20} color={loading.favorite ? "#9CA3AF" : "#6B7280"} />
           )}
-          <Text
-            className={`mr-2 font-medium ${
-              favorited ? "text-white" : "text-gray-700 dark:text-gray-300"
-            }`}
-          >
-            {favorited ? "علاقه‌مندی" : "افزودن"}
-          </Text>
         </Pressable>
 
         {/* Download Button */}
@@ -216,13 +209,6 @@ const LessonActions: React.FC<LessonActionsProps> = ({
               color={loading.download ? "#9CA3AF" : "#6B7280"}
             />
           )}
-          <Text
-            className={`mr-2 font-medium ${
-              downloaded ? "text-white" : "text-gray-700 dark:text-gray-300"
-            }`}
-          >
-            {downloaded ? "دانلود شده" : "دانلود"}
-          </Text>
         </Pressable>
       </View>
     </View>
