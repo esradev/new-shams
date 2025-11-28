@@ -15,7 +15,7 @@ import { useLocalSearchParams, useNavigation } from "expo-router";
 
 import AudioPlayer from "@/components/audio-player";
 import LessonActions from "@/components/lesson-actions";
-import { colorScheme } from "nativewind";
+import { useColorScheme } from "nativewind";
 import { formatPersianDate, isValidDate } from "@/utils/date-utils";
 import { createHighlightedHTML } from "@/utils/text-highlight";
 
@@ -42,6 +42,8 @@ export default function LessonPage() {
     searchQuery,
   } = useLocalSearchParams();
 
+  const { colorScheme } = useColorScheme();
+
   // Format the date properly
   const formattedDate =
     typeof postDate === "string" && isValidDate(postDate)
@@ -62,7 +64,7 @@ export default function LessonPage() {
       return createHighlightedHTML(
         content,
         searchQuery,
-        colorScheme.get() === "dark",
+        colorScheme === "dark",
       );
     }
 
@@ -134,7 +136,7 @@ export default function LessonPage() {
                   </Text>
                   <BookOpen
                     size={18}
-                    className="text-emerald-600 dark:text-emerald-500"
+                    color={colorScheme === "dark" ? "#059669" : "#047857"}
                   />
                 </View>
               </View>
@@ -156,7 +158,7 @@ export default function LessonPage() {
                   </Text>
                   <User
                     size={16}
-                    className="text-stone-500 dark:text-stone-500"
+                    color={colorScheme === "dark" ? "#78716c" : "#57534e"}
                   />
                 </View>
 
@@ -167,7 +169,7 @@ export default function LessonPage() {
                     </Text>
                     <Calendar
                       size={16}
-                      className="text-stone-500 dark:text-stone-500"
+                      color={colorScheme === "dark" ? "#78716c" : "#57534e"}
                     />
                   </View>
                 )}
@@ -204,7 +206,7 @@ export default function LessonPage() {
                   backgroundColor: "transparent",
                   fontSize: 18,
                   lineHeight: 32,
-                  color: colorScheme.get() === "dark" ? "#e7e5e4" : "#44403c",
+                  color: colorScheme === "dark" ? "#e7e5e4" : "#44403c",
                   textAlign: "right",
                   fontFamily: "System",
                 }}
@@ -218,21 +220,21 @@ export default function LessonPage() {
                     fontWeight: "bold",
                     marginBottom: 20,
                     textAlign: "right",
-                    color: colorScheme.get() === "dark" ? "#f5f5f4" : "#1c1917",
+                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917",
                   },
                   h2: {
                     fontSize: 24,
                     fontWeight: "600",
                     marginBottom: 16,
                     textAlign: "right",
-                    color: colorScheme.get() === "dark" ? "#f5f5f4" : "#1c1917",
+                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917",
                   },
                   h3: {
                     fontSize: 20,
                     fontWeight: "600",
                     marginBottom: 12,
                     textAlign: "right",
-                    color: colorScheme.get() === "dark" ? "#f5f5f4" : "#1c1917",
+                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917",
                   },
                   ul: {
                     paddingLeft: 0,
@@ -250,7 +252,7 @@ export default function LessonPage() {
                   },
                   strong: {
                     fontWeight: "bold",
-                    color: colorScheme.get() === "dark" ? "#f5f5f4" : "#1c1917",
+                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917",
                   },
                   em: {
                     fontStyle: "italic",
@@ -258,18 +260,18 @@ export default function LessonPage() {
                   blockquote: {
                     borderRightWidth: 4,
                     borderRightColor:
-                      colorScheme.get() === "dark" ? "#525252" : "#d6d3d1",
+                      colorScheme === "dark" ? "#525252" : "#d6d3d1",
                     paddingRight: 20,
                     marginVertical: 20,
                     backgroundColor:
-                      colorScheme.get() === "dark" ? "#292524" : "#f7f7f6",
+                      colorScheme === "dark" ? "#292524" : "#f7f7f6",
                     paddingVertical: 16,
                     textAlign: "right",
                   },
                   mark: {
                     backgroundColor:
-                      colorScheme.get() === "dark" ? "#451a03" : "#fef3c7",
-                    color: colorScheme.get() === "dark" ? "#fbbf24" : "#92400e",
+                      colorScheme === "dark" ? "#451a03" : "#fef3c7",
+                    color: colorScheme === "dark" ? "#fbbf24" : "#92400e",
                     padding: 4,
                     borderRadius: 4,
                     fontWeight: "600",

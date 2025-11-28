@@ -1,39 +1,50 @@
-import { useEffect, useState } from "react";
-import { Audio } from "expo-av";
+import { useEffect, useState, useCallback } from "react";
+import {
+  useAudioPlayer,
+  useAudioPlayerStatus,
+  setAudioModeAsync,
+} from "expo-audio";
 import * as FileSystem from "expo-file-system";
 import { Alert, Platform } from "react-native";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 
-export function useAudioPlayer(
+export function useAudioPlayerHook(
   id: string,
   postAudioSrc: any,
   postTitle?: string,
   categoryId?: string,
   categoryName?: string,
 ) {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.7);
-  const [isMuted, setIsMuted] = useState(false);
-  const [previousVolume, setPreviousVolume] = useState(0.7);
   const [expanded, setExpanded] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const { addToDownloads, isLessonDownloaded, removeFromDownloads } =
     useLocalStorage();
 
-  // Initialize audio permissions
+  // Determine audio source (local file or remote URL)
+  const audioSource = fileUri || postAudioSrc || null;
+
+  // Create audio player with expo-audio
+  const player = useAudioPlayer(audioSource, {
+    updateInterval: 500,
+    shouldPlayInBackground: true,
+  });
+
+  // Get real-time player status
+  const status = useAudioPlayerStatus(player);
+
+  // Initialize audio mode
   useEffect(() => {
     const initializeAudio = async () => {
       try {
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: false,
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionModeAndroid: "duckOthers",
+          interruptionMode: "mixWithOthers",
         });
       } catch (error) {
         console.log("Audio initialization error:", error);
@@ -42,15 +53,27 @@ export function useAudioPlayer(
     initializeAudio();
   }, []);
 
+  // Set initial volume
+  useEffect(() => {
+    if (player && status.isLoaded) {
+      player.volume = volume;
+    }
+  }, [player, status.isLoaded, volume]);
+
+  // Set playback rate
+  useEffect(() => {
+    if (player && status.isLoaded) {
+      player.setPlaybackRate(playbackRate);
+    }
+  }, [player, status.isLoaded, playbackRate]);
+
   // Check if FileSystem is available
-  const isFileSystemAvailable = () => {
+  const isFileSystemAvailable = useCallback(() => {
     try {
-      // In development, log debugging info
       if (__DEV__) {
         console.log("Checking FileSystem availability...");
         console.log("Platform.OS:", Platform.OS);
         console.log("FileSystem object exists:", !!FileSystem);
-        console.log("FileSystem keys:", Object.keys(FileSystem || {}));
       }
 
       // Check if we're on a supported platform
@@ -63,22 +86,8 @@ export function useAudioPlayer(
         return false;
       }
 
-      // Try to access documentDirectory with different approaches
-      let documentDirectory = null;
-      try {
-        documentDirectory = (FileSystem as any).documentDirectory;
-      } catch (e) {
-        // Try alternative access
-        try {
-          documentDirectory =
-            FileSystem["documentDirectory" as keyof typeof FileSystem];
-        } catch (e2) {
-          if (__DEV__) {
-            console.log("Could not access documentDirectory:", e2);
-          }
-          return false;
-        }
-      }
+      // Try to access documentDirectory using proper API
+      const documentDirectory = FileSystem.documentDirectory;
 
       const isAvailable = !!(
         documentDirectory && typeof documentDirectory === "string"
@@ -96,21 +105,15 @@ export function useAudioPlayer(
       }
       return false;
     }
-  };
+  }, []);
 
+  // Check if local file exists
   useEffect(() => {
     const checkFileExists = async () => {
       if (!id || !postAudioSrc || !isFileSystemAvailable()) return;
 
       try {
-        // Get document directory safely
-        let documentDirectory;
-        try {
-          documentDirectory = (FileSystem as any).documentDirectory;
-        } catch (e) {
-          documentDirectory =
-            FileSystem["documentDirectory" as keyof typeof FileSystem];
-        }
+        const documentDirectory = FileSystem.documentDirectory;
 
         if (documentDirectory) {
           const fileName = `audio_${id}.mp3`;
@@ -128,140 +131,80 @@ export function useAudioPlayer(
       }
     };
     checkFileExists();
-  }, [id, postAudioSrc]);
+  }, [id, postAudioSrc, isFileSystemAvailable]);
 
+  // Replace audio source when fileUri changes
   useEffect(() => {
-    const loadSound = async () => {
-      if (sound) await sound.unloadAsync();
-
-      const uri = fileUri ?? postAudioSrc;
-      if (!uri) return;
-
-      try {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri },
-          { shouldPlay: false },
-        );
-        setSound(newSound);
-
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded) {
-            setCurrentTime(status.positionMillis || 0);
-            setDuration(status.durationMillis || 0);
-            setIsPlaying(status.isPlaying || false);
-          }
-        });
-      } catch (error) {
-        console.error("Error loading audio:", error);
-      }
-    };
-
-    loadSound();
-
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [fileUri, postAudioSrc]);
-
-  useEffect(() => {
-    if (sound) {
-      sound.setRateAsync(playbackRate, true);
+    if (player && audioSource) {
+      player.replace(audioSource);
     }
+  }, [player, audioSource]);
 
-    return () => {
-      if (sound) {
-        sound.setRateAsync(1, true);
-      }
-    };
-  }, [playbackRate, sound]);
-
-  const togglePlay = async () => {
-    if (!sound) return;
+  // Audio control functions
+  const togglePlay = useCallback(async () => {
+    if (!player) return;
 
     try {
-      if (isPlaying) {
-        await sound.pauseAsync();
+      if (status.playing) {
+        player.pause();
       } else {
-        await sound.playAsync();
+        player.play();
       }
     } catch (error) {
       console.error("Error toggling play:", error);
     }
-  };
+  }, [player, status.playing]);
 
-  const handleSeek = async (value: number) => {
-    if (sound) {
-      try {
-        await sound.setPositionAsync(value);
-      } catch (error) {
-        console.error("Error seeking:", error);
+  const handleSeek = useCallback(
+    async (seconds: number) => {
+      if (player) {
+        try {
+          await player.seekTo(seconds);
+        } catch (error) {
+          console.error("Error seeking:", error);
+        }
       }
-    }
-  };
+    },
+    [player],
+  );
 
-  const handleForward = async () => {
-    if (sound) {
+  const handleForward = useCallback(async () => {
+    if (player && status.duration > 0) {
       try {
-        await sound.setPositionAsync(currentTime + 30000);
+        const newPosition = Math.min(status.currentTime + 30, status.duration);
+        await player.seekTo(newPosition);
       } catch (error) {
         console.error("Error forwarding:", error);
       }
     }
-  };
+  }, [player, status.currentTime, status.duration]);
 
-  const handleBackward = async () => {
-    if (sound) {
+  const handleBackward = useCallback(async () => {
+    if (player) {
       try {
-        const newPosition = Math.max(0, currentTime - 30000);
-        await sound.setPositionAsync(newPosition);
+        const newPosition = Math.max(0, status.currentTime - 30);
+        await player.seekTo(newPosition);
       } catch (error) {
         console.error("Error rewinding:", error);
       }
     }
-  };
+  }, [player, status.currentTime]);
 
-  const handleVolumeChange = (value: number) => {
-    if (sound) {
-      try {
-        sound.setVolumeAsync(value);
-        setVolume(value);
-        if (value > 0 && isMuted) {
-          setIsMuted(false);
+  const handleVolumeChange = useCallback(
+    (value: number) => {
+      if (player) {
+        try {
+          player.volume = value;
+          setVolume(value);
+        } catch (error) {
+          console.error("Error changing volume:", error);
         }
-        if (value === 0) {
-          setIsMuted(true);
-        }
-      } catch (error) {
-        console.error("Error changing volume:", error);
       }
-    }
-  };
+    },
+    [player],
+  );
 
-  const toggleMute = () => {
-    if (sound) {
-      try {
-        if (isMuted) {
-          // Unmute: restore previous volume
-          const volumeToRestore = previousVolume > 0 ? previousVolume : 0.7;
-          sound.setVolumeAsync(volumeToRestore);
-          setVolume(volumeToRestore);
-          setIsMuted(false);
-        } else {
-          // Mute: save current volume and set to 0
-          setPreviousVolume(volume);
-          sound.setVolumeAsync(0);
-          setVolume(0);
-          setIsMuted(true);
-        }
-      } catch (error) {
-        console.error("Error toggling mute:", error);
-      }
-    }
-  };
-
-  const handleDownload = async () => {
+  const handleDownload = useCallback(async () => {
     if (!postAudioSrc || !id) {
       Alert.alert("خطا", "اطلاعات فایل صوتی در دسترس نیست");
       return;
@@ -290,22 +233,12 @@ export function useAudioPlayer(
             onPress: async () => {
               try {
                 if (isFileSystemAvailable()) {
-                  // Get document directory safely
-                  let documentDirectory;
-                  try {
-                    documentDirectory = (FileSystem as any).documentDirectory;
-                  } catch (e) {
-                    documentDirectory =
-                      FileSystem[
-                        "documentDirectory" as keyof typeof FileSystem
-                      ];
-                  }
+                  const documentDirectory = FileSystem.documentDirectory;
 
                   if (documentDirectory) {
                     const fileName = `audio_${id}.mp3`;
                     const localUri = `${documentDirectory}${fileName}`;
 
-                    // Remove from device storage
                     const fileInfo = await FileSystem.getInfoAsync(localUri);
                     if (fileInfo.exists) {
                       await FileSystem.deleteAsync(localUri);
@@ -313,7 +246,6 @@ export function useAudioPlayer(
                   }
                 }
 
-                // Remove from local storage
                 await removeFromDownloads(id);
                 setFileUri(null);
 
@@ -332,19 +264,7 @@ export function useAudioPlayer(
     setIsDownloading(true);
 
     try {
-      // Get document directory safely with fallback
-      let documentDirectory;
-      try {
-        documentDirectory = (FileSystem as any).documentDirectory;
-      } catch (e) {
-        try {
-          documentDirectory =
-            FileSystem["documentDirectory" as keyof typeof FileSystem];
-        } catch (e2) {
-          // Final fallback - try to create a temporary directory path
-          documentDirectory = null;
-        }
-      }
+      const documentDirectory = FileSystem.documentDirectory;
 
       if (!documentDirectory) {
         throw new Error(
@@ -404,7 +324,6 @@ export function useAudioPlayer(
     } catch (error) {
       console.error("Download error:", error);
 
-      // Special handling for documentDirectory error
       if (
         error instanceof Error &&
         error.message.includes("Document directory")
@@ -431,17 +350,26 @@ export function useAudioPlayer(
     } finally {
       setIsDownloading(false);
     }
-  };
+  }, [
+    postAudioSrc,
+    id,
+    postTitle,
+    categoryId,
+    categoryName,
+    isFileSystemAvailable,
+    isLessonDownloaded,
+    addToDownloads,
+    removeFromDownloads,
+  ]);
 
-  const formatTime = (timeMillis: number) => {
-    const totalSeconds = timeMillis / 1000;
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = Math.floor(totalSeconds % 60);
+  const formatTime = useCallback((timeInSeconds: number) => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = Math.floor(timeInSeconds % 60);
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
+  }, []);
 
   // Test function for development
-  const testFileSystem = async () => {
+  const testFileSystem = useCallback(async () => {
     if (__DEV__) {
       console.log("Testing FileSystem capabilities...");
       try {
@@ -449,7 +377,7 @@ export function useAudioPlayer(
         console.log("FileSystem available:", available);
 
         if (available) {
-          const testFile = `${(FileSystem as any).documentDirectory}test.txt`;
+          const testFile = `${FileSystem.documentDirectory}test.txt`;
           await FileSystem.writeAsStringAsync(testFile, "test");
           const exists = await FileSystem.getInfoAsync(testFile);
           console.log("Test file created:", exists.exists);
@@ -462,37 +390,61 @@ export function useAudioPlayer(
         console.log("FileSystem test failed:", error);
       }
     }
-  };
+  }, [isFileSystemAvailable]);
 
   // Run test in development mode
   useEffect(() => {
     if (__DEV__) {
       testFileSystem();
     }
-  }, []);
+  }, [testFileSystem]);
 
   return {
-    isPlaying,
+    // Playback state from expo-audio
+    isPlaying: status.playing,
+    currentTime: status.currentTime,
+    duration: status.duration,
+    isLoaded: status.isLoaded,
+    isBuffering: status.isBuffering,
+
+    // Control functions
     togglePlay,
     handleSeek,
     handleForward,
     handleBackward,
     handleVolumeChange,
-    toggleMute,
     handleDownload,
     formatTime,
-    currentTime,
-    duration,
+
+    // State management
     volume,
-    isMuted,
     expanded,
     setExpanded,
     playbackRate,
-    setPlaybackRate,
+    setPlaybackRate: useCallback(
+      (rate: number) => {
+        setPlaybackRate(rate);
+        if (player && status.isLoaded) {
+          player.setPlaybackRate(rate);
+        }
+      },
+      [player, status.isLoaded],
+    ),
+
+    // Download state
     postAudioSrc,
     isDownloading,
     isDownloaded: isLessonDownloaded(id),
     isFileSystemAvailable: isFileSystemAvailable(),
+
+    // Development helpers
     testFileSystem: __DEV__ ? testFileSystem : undefined,
+
+    // Expose player instance for advanced usage
+    player,
+    status,
   };
 }
+
+// Export with the same name as the original hook for compatibility
+export { useAudioPlayerHook as useAudioPlayer };
