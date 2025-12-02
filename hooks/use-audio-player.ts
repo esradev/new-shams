@@ -20,6 +20,7 @@ export function useAudioPlayerHook(
   const [playbackRate, setPlaybackRate] = useState(1)
   const [fileUri, setFileUri] = useState<string | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0)
   const [isMuted, setIsMuted] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
@@ -245,6 +246,9 @@ export function useAudioPlayerHook(
     }
 
     setIsDownloading(true)
+    setDownloadProgress(0)
+
+    let progressInterval: number | null = null
 
     try {
       const fileName = `audio_${id}.mp3`
@@ -271,12 +275,29 @@ export function useAudioPlayerHook(
         console.log("Saving to cache directory:", cacheDirectory)
       }
 
-      // Download the file using modern API with idempotent option
+      // Start simulated progress updates
+      progressInterval = setInterval(() => {
+        setDownloadProgress(prev => {
+          if (prev < 90) {
+            return prev + Math.floor(Math.random() * 15) + 5 // Random increment between 5-19 (whole numbers)
+          }
+          return prev
+        })
+      }, 400) // Update every 300ms
+
+      // Download the file using modern API
       const downloadedFile = await File.downloadFileAsync(
         postAudioSrc,
         cacheDirectory,
         { idempotent: true }
       )
+
+      // Clear progress interval and set to 100%
+      if (progressInterval !== null) {
+        clearInterval(progressInterval)
+        progressInterval = null
+      }
+      setDownloadProgress(100)
 
       if (__DEV__) {
         console.log("Download completed:", downloadedFile.uri)
@@ -317,6 +338,11 @@ export function useAudioPlayerHook(
         throw new Error("Download completed but file does not exist")
       }
     } catch (error) {
+      // Clear progress interval in case of error
+      if (progressInterval !== null) {
+        clearInterval(progressInterval)
+      }
+
       console.error("Download error:", error)
 
       if (error instanceof Error && error.message.includes("Cache directory")) {
@@ -341,6 +367,7 @@ export function useAudioPlayerHook(
       )
     } finally {
       setIsDownloading(false)
+      setDownloadProgress(0)
     }
   }, [
     postAudioSrc,
@@ -480,6 +507,7 @@ export function useAudioPlayerHook(
     // Download state
     postAudioSrc,
     isDownloading,
+    downloadProgress,
     isDownloaded: isLessonDownloaded(id),
     isFileSystemAvailable: isFileSystemAvailable(),
 

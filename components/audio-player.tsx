@@ -12,7 +12,8 @@ import {
   ChevronsRight,
   Gauge,
   X,
-  CheckCircle2
+  CheckCircle2,
+  Trash2
 } from "lucide-react-native"
 
 import { useAudioPlayer } from "@/hooks/use-audio-player"
@@ -41,6 +42,7 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
       playbackRate,
       handlePlaybackRateToggle,
       isDownloading,
+      downloadProgress,
       isDownloaded,
       showDeleteDialog,
       setShowDeleteDialog,
@@ -59,15 +61,11 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
           left: 0,
           bottom: 0,
           right: 0,
-          backgroundColor: "rgba(255, 255, 255, 0.95)",
-          borderTopWidth: 1,
-          borderTopColor: "rgba(16, 185, 129, 0.1)",
-          backdropFilter: "blur(20px)"
+          backgroundColor: "#ffffff"
         }}
         className="bg-white/95 dark:bg-gray-900/95"
       >
         {/* Minimal accent line */}
-        <View style={{ height: 2 }} className="bg-emerald-500" />
 
         <View className="px-4 py-3">
           {/* Progress bar */}
@@ -77,7 +75,7 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
                 {formatTime(currentTime)}
               </Text>
               <Slider
-                style={{ flex: 1, height: 20 }}
+                style={{ flex: 1, height: 40 }}
                 minimumValue={0}
                 maximumValue={duration || 1}
                 value={currentTime}
@@ -99,14 +97,16 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
             <Pressable
               onPress={handlePlaybackRateToggle}
               style={{
-                paddingHorizontal: 12,
+                paddingHorizontal: 6,
                 paddingVertical: 6,
                 borderRadius: 6,
                 backgroundColor: "rgba(16, 185, 129, 0.1)",
                 flexDirection: "row",
                 alignItems: "center",
-                gap: 4
+                gap: 4,
+                minWidth: 65 // Fixed minimum width to prevent layout shift
               }}
+              className="flex-shrink-0"
             >
               <Gauge size={18} color="#10B981" />
               <Text className="text-emerald-600 dark:text-emerald-400 text-xs font-medium">
@@ -114,64 +114,70 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
               </Text>
             </Pressable>
 
-            {/* Backward */}
-            <Pressable
-              onPress={handleBackward}
-              style={{
-                padding: 8,
-                borderRadius: 8
-              }}
-              className="active:bg-gray-100 dark:active:bg-gray-800"
-              aria-label="Skip backward 30 seconds"
-            >
-              <ChevronsLeft size={20} color="#6B7280" />
-            </Pressable>
+            <View className="flex flex-row gap-6 justify-between items-center">
+              {/* Backward */}
+              <Pressable
+                onPress={handleBackward}
+                style={{
+                  padding: 8,
+                  borderRadius: 8
+                }}
+                className="active:bg-gray-100 dark:active:bg-gray-800"
+                aria-label="Skip backward 30 seconds"
+              >
+                <ChevronsLeft size={20} color="#6B7280" />
+              </Pressable>
 
-            {/* Play/Pause */}
-            <Pressable
-              onPress={togglePlay}
-              disabled={!isLoaded || isBuffering}
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                backgroundColor:
-                  !isLoaded || isBuffering ? "#D1D5DB" : "#10B981",
-                justifyContent: "center",
-                alignItems: "center",
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 2,
-                // Add a subtle border for enhanced appearance
-                borderWidth: !isLoaded || isBuffering ? 0 : 1,
-                borderColor:
-                  !isLoaded || isBuffering ? "transparent" : "#059669"
-              }}
-              aria-label={isPlaying ? "Pause" : "Play"}
-            >
-              {isBuffering ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : isPlaying ? (
-                <Pause size={20} color="white" />
-              ) : (
-                <Play size={20} color="white" style={{ marginLeft: 2 }} />
-              )}
-            </Pressable>
+              {/* Play/Pause */}
+              <Pressable
+                onPress={togglePlay}
+                disabled={!isLoaded || isBuffering}
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor:
+                    !isLoaded || isBuffering
+                      ? "#D1D5DB"
+                      : isPlaying
+                      ? "#10B981"
+                      : "#059669",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 2,
+                  // Add a subtle border for enhanced appearance
+                  borderWidth: !isLoaded || isBuffering ? 0 : 1,
+                  borderColor:
+                    !isLoaded || isBuffering ? "transparent" : "#059669"
+                }}
+                aria-label={isPlaying ? "Pause" : "Play"}
+              >
+                {isBuffering ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : isPlaying ? (
+                  <Pause size={20} color="white" />
+                ) : (
+                  <Play size={20} color="white" />
+                )}
+              </Pressable>
 
-            {/* Forward */}
-            <Pressable
-              onPress={handleForward}
-              style={{
-                padding: 8,
-                borderRadius: 8
-              }}
-              className="active:bg-gray-100 dark:active:bg-gray-800"
-              aria-label="Skip forward 30 seconds"
-            >
-              <ChevronsRight size={20} color="#6B7280" />
-            </Pressable>
+              {/* Forward */}
+              <Pressable
+                onPress={handleForward}
+                style={{
+                  padding: 8,
+                  borderRadius: 8
+                }}
+                className="active:bg-gray-100 dark:active:bg-gray-800"
+                aria-label="Skip forward 30 seconds"
+              >
+                <ChevronsRight size={20} color="#6B7280" />
+              </Pressable>
+            </View>
 
             {/* Download button */}
             {isFileSystemAvailable && (
@@ -181,20 +187,39 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
                   padding: 8,
                   borderRadius: 6,
                   backgroundColor: isDownloaded
+                    ? "rgba(107, 114, 128, 0.1)"
+                    : isDownloading
                     ? "rgba(16, 185, 129, 0.1)"
                     : "rgba(107, 114, 128, 0.1)",
-                  opacity: isDownloading ? 0.5 : 1
+                  opacity: isDownloading ? 1 : 1,
+                  minWidth: isDownloading ? 45 : "auto",
+                  alignItems: "center",
+                  justifyContent: "center"
                 }}
                 aria-label={isDownloaded ? "Remove download" : "Download audio"}
                 disabled={isDownloading}
               >
                 {isDownloading ? (
-                  <ActivityIndicator size="small" color="#6B7280" />
+                  <View
+                    style={{ alignItems: "center", justifyContent: "center" }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontWeight: "700",
+                        color: "#10B981",
+                        fontFamily: "monospace",
+                        textAlign: "center"
+                      }}
+                    >
+                      {downloadProgress}%
+                    </Text>
+                  </View>
                 ) : isDownloaded ? (
-                  <CheckCircle
+                  <Trash2
                     size={16}
-                    color="#10B981"
-                    fill="rgba(16, 185, 129, 0.2)"
+                    color="#DC2626"
+                    fill="rgba(220, 38, 38, 0.1)"
                   />
                 ) : (
                   <DownloadCloud size={16} color="#6B7280" />
