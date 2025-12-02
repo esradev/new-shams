@@ -94,14 +94,6 @@ const Categories = () => {
     setSearchPage(1)
   }
 
-  if (loading) {
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
-        <LoadingSpinner />
-      </SafeAreaView>
-    )
-  }
-
   if (error || !category) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
@@ -273,7 +265,18 @@ const Categories = () => {
                   </View>
                 )
               ) : loading ? (
-                <LoadingSpinner />
+                <View className="py-8 items-center">
+                  <LoadingSpinner />
+                  <Text className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    در حال بارگذاری درس‌ها...
+                  </Text>
+                </View>
+              ) : posts.length === 0 ? (
+                <View className="py-8 items-center">
+                  <Text className="text-gray-500 dark:text-gray-400 text-center text-base">
+                    هیچ درسی در این دسته یافت نشد
+                  </Text>
+                </View>
               ) : (
                 // Regular Posts List
                 <View className="gap-y-3">
