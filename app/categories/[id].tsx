@@ -16,6 +16,7 @@ import { useApi } from "@/context/api-context"
 import { usePostsByCategory } from "@/hooks/use-posts-by-category"
 import { useSearch } from "@/hooks/use-search"
 import { useLocalStorage } from "@/hooks/use-local-storage"
+import { preloadLessons } from "@/hooks/use-lesson"
 import { formatPersianDate } from "@/utils/date-utils"
 
 const Categories = () => {
@@ -93,6 +94,14 @@ const Categories = () => {
       navigation.setOptions({ title: category.name })
     }
   }, [category])
+
+  // Preload lessons when posts are loaded
+  React.useEffect(() => {
+    if (posts.length > 0) {
+      const lessonIds = posts.map(post => post.id)
+      preloadLessons(lessonIds)
+    }
+  }, [posts])
 
   const handleClearSearch = () => {
     setSearchQuery("")
@@ -239,14 +248,8 @@ const Categories = () => {
                             pathname: "/lessons/[id]" as any,
                             params: {
                               id: lesson.id.toString(),
-                              postTitle: lesson.title.rendered,
-                              postContent: lesson.content?.rendered || "",
-                              postAudioSrc:
-                                lesson.meta?.["the-audio-of-the-lesson"] || "",
-                              postDate:
-                                lesson.meta?.["date-of-the-lesson"] || "",
-                              categorayId: id,
-                              categorayName: category?.name || "",
+                              categoryId: id,
+                              categoryName: category?.name || "",
                               searchQuery: searchQuery
                             }
                           }}
@@ -310,13 +313,8 @@ const Categories = () => {
                           pathname: "/lessons/[id]" as any,
                           params: {
                             id: lesson.id.toString(),
-                            postTitle: lesson.title.rendered,
-                            postContent: lesson.content?.rendered || "",
-                            postAudioSrc:
-                              lesson.meta?.["the-audio-of-the-lesson"] || "",
-                            postDate: lesson.meta?.["date-of-the-lesson"] || "",
-                            categorayId: id,
-                            categorayName: category?.name || ""
+                            categoryId: id,
+                            categoryName: category?.name || ""
                           }
                         }}
                         key={lesson.id}

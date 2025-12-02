@@ -1,11 +1,11 @@
-import React from "react";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import React from "react"
+import { SafeAreaProvider } from "react-native-safe-area-context"
+import { Stack } from "expo-router"
 
-import { ApiProvider } from "@/context/api-context";
-import { CacheProvider } from "@/context/cache-context";
-import Header from "@/components/header";
-import "./global.css";
+import { ApiProvider } from "@/context/api-context"
+import { CacheProvider } from "@/context/cache-context"
+import Header from "@/components/header"
+import "./global.css"
 
 export default function RootLayout() {
   return (
@@ -28,5 +28,5 @@ export default function RootLayout() {
         </SafeAreaProvider>
       </ApiProvider>
     </CacheProvider>
-  );
+  )
 }

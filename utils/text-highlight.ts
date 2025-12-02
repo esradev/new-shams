@@ -1,8 +1,8 @@
 export interface HighlightConfig {
-  searchQuery: string;
-  highlightColor?: string;
-  highlightTextColor?: string;
-  caseSensitive?: boolean;
+  searchQuery: string
+  highlightColor?: string
+  highlightTextColor?: string
+  caseSensitive?: boolean
 }
 
 export const highlightSearchTerms = (
@@ -10,113 +10,127 @@ export const highlightSearchTerms = (
   config: HighlightConfig
 ): string => {
   if (!config.searchQuery.trim() || !text) {
-    return text;
+    return text
   }
 
   const {
     searchQuery,
-    highlightColor = '#fef3c7',
-    highlightTextColor = '#92400e',
-    caseSensitive = false,
-  } = config;
+    highlightColor = "#fef3c7",
+    highlightTextColor = "#92400e",
+    caseSensitive = false
+  } = config
 
   // Split search query into individual terms
   const searchTerms = searchQuery
     .trim()
     .split(/\s+/)
-    .filter(term => term.length > 0);
+    .filter(term => term.length > 0)
 
   if (searchTerms.length === 0) {
-    return text;
+    return text
   }
 
-  let highlightedText = text;
+  let highlightedText = text
 
   // Highlight each search term
   searchTerms.forEach(term => {
-    const flags = caseSensitive ? 'g' : 'gi';
-    const regex = new RegExp(`(${escapeRegExp(term)})`, flags);
+    const flags = caseSensitive ? "g" : "gi"
+    const regex = new RegExp(`(${escapeRegExp(term)})`, flags)
 
     highlightedText = highlightedText.replace(
       regex,
       `<mark style="background-color: ${highlightColor}; color: ${highlightTextColor}; padding: 2px 4px; border-radius: 4px; font-weight: 600;">$1</mark>`
-    );
-  });
+    )
+  })
 
-  return highlightedText;
-};
+  return highlightedText
+}
 
 export const highlightSearchTermsInHTML = (
   html: string,
   config: HighlightConfig
 ): string => {
   if (!config.searchQuery.trim() || !html) {
-    return html;
+    return html
   }
 
   // Parse HTML and highlight text content while preserving HTML structure
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, "text/html")
 
   // Function to recursively process text nodes
   const processTextNodes = (node: Node) => {
     if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent || '';
+      const text = node.textContent || ""
       if (text.trim()) {
-        const highlightedText = highlightSearchTerms(text, config);
+        const highlightedText = highlightSearchTerms(text, config)
         if (highlightedText !== text) {
-          const wrapper = document.createElement('span');
-          wrapper.innerHTML = highlightedText;
-          node.parentNode?.replaceChild(wrapper, node);
+          const wrapper = document.createElement("span")
+          wrapper.innerHTML = highlightedText
+          node.parentNode?.replaceChild(wrapper, node)
         }
       }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       // Skip script and style tags
-      const tagName = (node as Element).tagName.toLowerCase();
-      if (tagName !== 'script' && tagName !== 'style') {
-        Array.from(node.childNodes).forEach(processTextNodes);
+      const tagName = (node as Element).tagName.toLowerCase()
+      if (tagName !== "script" && tagName !== "style") {
+        Array.from(node.childNodes).forEach(processTextNodes)
       }
     }
-  };
+  }
 
-  processTextNodes(doc.body);
-  return doc.body.innerHTML;
-};
+  processTextNodes(doc.body)
+  return doc.body.innerHTML
+}
 
 // Helper function to escape special regex characters
 const escapeRegExp = (string: string): string => {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-};
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
 
-// React Native specific highlighting for RenderHTML
+// React Native specific highlighting for RenderHTML - optimized for performance
 export const createHighlightedHTML = (
   content: string,
   searchQuery: string,
   isDarkMode: boolean = false
 ): string => {
-  if (!searchQuery.trim()) {
-    return content;
+  // Early return for empty search
+  if (!searchQuery.trim() || !content) {
+    return content
   }
 
+  // Limit search query length to prevent performance issues
+  const trimmedQuery = searchQuery.trim().substring(0, 100)
+
   const highlightConfig: HighlightConfig = {
-    searchQuery,
-    highlightColor: isDarkMode ? '#451a03' : '#fef3c7',
-    highlightTextColor: isDarkMode ? '#fbbf24' : '#92400e',
-    caseSensitive: false,
-  };
+    searchQuery: trimmedQuery,
+    highlightColor: isDarkMode ? "#451a03" : "#fef3c7",
+    highlightTextColor: isDarkMode ? "#fbbf24" : "#92400e",
+    caseSensitive: false
+  }
 
-  // Clean the content first (remove extra whitespace, normalize)
-  const cleanContent = content
-    .replace(/\s+/g, ' ')
-    .trim();
+  // Use simple highlighting for better performance
+  return highlightSearchTerms(content, highlightConfig)
+}
 
-  return highlightSearchTerms(cleanContent, highlightConfig);
-};
+// Optimized async version using Web Worker concept
+export const createHighlightedHTMLAsync = async (
+  content: string,
+  searchQuery: string,
+  isDarkMode: boolean = false
+): Promise<string> => {
+  return new Promise(resolve => {
+    // Use setTimeout to make it non-blocking
+    setTimeout(() => {
+      resolve(createHighlightedHTML(content, searchQuery, isDarkMode))
+    }, 0)
+  })
+}
 
 // Alternative approach for React Native Text highlighting
 export interface TextHighlightPart {
-  text: string;
-  isHighlighted: boolean;
+  text: string
+  isHighlighted: boolean
 }
 
 export const splitTextForHighlighting = (
@@ -124,54 +138,52 @@ export const splitTextForHighlighting = (
   searchQuery: string
 ): TextHighlightPart[] => {
   if (!searchQuery.trim()) {
-    return [{ text, isHighlighted: false }];
+    return [{ text, isHighlighted: false }]
   }
 
   const searchTerms = searchQuery
     .trim()
     .split(/\s+/)
-    .filter(term => term.length > 0);
+    .filter(term => term.length > 0)
 
   if (searchTerms.length === 0) {
-    return [{ text, isHighlighted: false }];
+    return [{ text, isHighlighted: false }]
   }
 
   // Create a combined regex for all search terms
-  const regexPattern = searchTerms
-    .map(term => escapeRegExp(term))
-    .join('|');
+  const regexPattern = searchTerms.map(term => escapeRegExp(term)).join("|")
 
-  const regex = new RegExp(`(${regexPattern})`, 'gi');
+  const regex = new RegExp(`(${regexPattern})`, "gi")
 
-  const parts: TextHighlightPart[] = [];
-  let lastIndex = 0;
+  const parts: TextHighlightPart[] = []
+  let lastIndex = 0
 
-  let match;
+  let match
   while ((match = regex.exec(text)) !== null) {
     // Add text before match
     if (match.index > lastIndex) {
       parts.push({
         text: text.slice(lastIndex, match.index),
-        isHighlighted: false,
-      });
+        isHighlighted: false
+      })
     }
 
     // Add highlighted match
     parts.push({
       text: match[0],
-      isHighlighted: true,
-    });
+      isHighlighted: true
+    })
 
-    lastIndex = regex.lastIndex;
+    lastIndex = regex.lastIndex
   }
 
   // Add remaining text
   if (lastIndex < text.length) {
     parts.push({
       text: text.slice(lastIndex),
-      isHighlighted: false,
-    });
+      isHighlighted: false
+    })
   }
 
-  return parts.filter(part => part.text.length > 0);
-};
+  return parts.filter(part => part.text.length > 0)
+}

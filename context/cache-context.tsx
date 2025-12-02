@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import axios from "axios"
+import { apiCache } from "@/utils/storage"
 
 interface CacheItem {
   data: any
@@ -28,7 +28,6 @@ interface CacheContextType {
 
 const CacheContext = createContext<CacheContextType | null>(null)
 
-const CACHE_PREFIX = "api_cache_"
 const DEFAULT_MAX_AGE = 5 * 60 * 1000 // 5 minutes in milliseconds
 
 export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -46,22 +45,8 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
     maxAge: number = DEFAULT_MAX_AGE
   ): Promise<any | null> => {
     try {
-      const cacheKey = CACHE_PREFIX + encodeURIComponent(url)
-      const cachedItemString = await AsyncStorage.getItem(cacheKey)
-
-      if (!cachedItemString) {
-        return null
-      }
-
-      const cachedItem: CacheItem = JSON.parse(cachedItemString)
-      const isExpired = Date.now() - cachedItem.timestamp > maxAge
-
-      if (isExpired) {
-        await AsyncStorage.removeItem(cacheKey)
-        return null
-      }
-
-      return cachedItem.data
+      const cacheKey = encodeURIComponent(url)
+      return await apiCache.get(cacheKey)
     } catch (error) {
       console.error("Error retrieving cached data:", error)
       return null
@@ -71,16 +56,8 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
   // Set cached data
   const setCachedData = async (url: string, data: any): Promise<void> => {
     try {
-      const cacheKey = CACHE_PREFIX + encodeURIComponent(url)
-      const dataString = JSON.stringify(data)
-      const cacheItem: CacheItem = {
-        data,
-        timestamp: Date.now(),
-        url,
-        size: new TextEncoder().encode(dataString).length
-      }
-
-      await AsyncStorage.setItem(cacheKey, JSON.stringify(cacheItem))
+      const cacheKey = encodeURIComponent(url)
+      await apiCache.set(cacheKey, data, DEFAULT_MAX_AGE)
     } catch (error) {
       console.error("Error setting cached data:", error)
     }
@@ -89,10 +66,7 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
   // Clear all cache
   const clearCache = async (): Promise<void> => {
     try {
-      const allKeys = await AsyncStorage.getAllKeys()
-      const cacheKeys = allKeys.filter(key => key.startsWith(CACHE_PREFIX))
-      await AsyncStorage.multiRemove(cacheKeys)
-
+      await apiCache.clear()
       setCacheStats({
         totalEntries: 0,
         totalSize: 0,
@@ -106,41 +80,29 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
   // Get cache statistics
   const getCacheStats = async (): Promise<CacheStats> => {
     try {
-      const allKeys = await AsyncStorage.getAllKeys()
-      const cacheKeys = allKeys.filter(key => key.startsWith(CACHE_PREFIX))
+      const stats = apiCache.getStats()
+      const cacheEntries = apiCache.getAllCachedItems()
 
-      const cacheEntries: CacheItem[] = []
-      let totalSize = 0
+      const entries: CacheItem[] = cacheEntries.map(({ key, item }) => ({
+        data: item.data,
+        timestamp: item.timestamp,
+        url: decodeURIComponent(key),
+        size: JSON.stringify(item.data).length
+      }))
 
-      for (const key of cacheKeys) {
-        const itemString = await AsyncStorage.getItem(key)
-        if (itemString) {
-          try {
-            const item: CacheItem = JSON.parse(itemString)
-            cacheEntries.push(item)
-            totalSize += item.size
-          } catch (parseError) {
-            console.warn("Invalid cache item found:", key)
-            await AsyncStorage.removeItem(key)
-          }
-        }
+      const cacheStatsData: CacheStats = {
+        totalEntries: stats.totalItems,
+        totalSize: stats.totalSize,
+        entries: entries.sort((a, b) => b.timestamp - a.timestamp)
       }
 
-      const stats: CacheStats = {
-        totalEntries: cacheEntries.length,
-        totalSize,
-        entries: cacheEntries.sort((a, b) => b.timestamp - a.timestamp)
-      }
-
-      setCacheStats(stats)
-      return stats
+      setCacheStats(cacheStatsData)
+      return cacheStatsData
     } catch (error) {
       console.error("Error getting cache stats:", error)
       return { totalEntries: 0, totalSize: 0, entries: [] }
     }
-  }
-
-  // Fetch data with cache
+  } // Fetch data with cache
   const fetchWithCache = async (
     url: string,
     options: { maxAge?: number; forceRefresh?: boolean } = {}
@@ -165,8 +127,8 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return data
     } catch (error) {
-      // If network fails, try to return stale cached data as fallback
-      const staleData = await getCachedData(url, Number.MAX_SAFE_INTEGER)
+      // If network fails, try to return any cached data as fallback
+      const staleData = await apiCache.get(encodeURIComponent(url))
       if (staleData !== null) {
         console.warn("Network failed, returning stale cached data:", url)
         return staleData

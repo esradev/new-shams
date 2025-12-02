@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useCache } from "@/context/cache-context"
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import { offlineCache } from "@/utils/storage"
+import { preloadLessons } from "@/hooks/use-lesson"
 
 export interface PostType {
   id: number
@@ -19,25 +20,6 @@ export interface PostType {
 const POSTS_STORAGE_PREFIX = "offline_posts_"
 const POSTS_TIMESTAMP_PREFIX = "offline_posts_timestamp_"
 const OFFLINE_MAX_AGE = 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
-
-// Create a storage interface that matches MMKV API but uses AsyncStorage
-const storage = {
-  getString: async (key: string): Promise<string | undefined> => {
-    try {
-      const value = await AsyncStorage.getItem(key)
-      return value ?? undefined
-    } catch {
-      return undefined
-    }
-  },
-  set: async (key: string, value: string): Promise<void> => {
-    try {
-      await AsyncStorage.setItem(key, value)
-    } catch (error) {
-      console.error("Storage error:", error)
-    }
-  }
-}
 
 export const usePostsByCategory = (categoryId: string | string[]) => {
   const [posts, setPosts] = useState<PostType[]>([])
@@ -65,11 +47,10 @@ export const usePostsByCategory = (categoryId: string | string[]) => {
           setLoading(false)
 
           // Check if offline data is stale
-          const timestamp = await storage.getString(
+          const timestamp = await offlineCache.get<number>(
             `${POSTS_TIMESTAMP_PREFIX}${storageKey}`
           )
-          const isStale =
-            !timestamp || Date.now() - parseInt(timestamp) > OFFLINE_MAX_AGE
+          const isStale = !timestamp || Date.now() - timestamp > OFFLINE_MAX_AGE
 
           if (!isStale) {
             return // Use offline data without fetching
@@ -94,6 +75,10 @@ export const usePostsByCategory = (categoryId: string | string[]) => {
 
         setPosts(response.data)
         setTotalPages(Number(response.headers["x-wp-totalpages"]) || 1)
+
+        // Preload lessons in background
+        const lessonIds = response.data.map((post: any) => post.id)
+        preloadLessons(lessonIds)
       } catch (err: any) {
         // If network fails and we have offline data, use it
         const storageKey = `${categoryId}_${page}`
@@ -131,12 +116,11 @@ export const usePostsByCategory = (categoryId: string | string[]) => {
     storageKey: string
   ): Promise<{ posts: PostType[]; totalPages: number } | null> => {
     try {
-      const postsString = await storage.getString(
-        `${POSTS_STORAGE_PREFIX}${storageKey}`
-      )
-      if (postsString) {
-        return JSON.parse(postsString)
-      }
+      const postsData = await offlineCache.get<{
+        posts: PostType[]
+        totalPages: number
+      }>(`${POSTS_STORAGE_PREFIX}${storageKey}`)
+      return postsData
     } catch (error) {
       console.error("Error loading offline posts:", error)
     }
@@ -148,13 +132,15 @@ export const usePostsByCategory = (categoryId: string | string[]) => {
     data: { posts: PostType[]; totalPages: number }
   ): Promise<void> => {
     try {
-      await storage.set(
+      await offlineCache.set(
         `${POSTS_STORAGE_PREFIX}${storageKey}`,
-        JSON.stringify(data)
+        data,
+        OFFLINE_MAX_AGE
       )
-      await storage.set(
+      await offlineCache.set(
         `${POSTS_TIMESTAMP_PREFIX}${storageKey}`,
-        Date.now().toString()
+        Date.now(),
+        OFFLINE_MAX_AGE
       )
     } catch (error) {
       console.error("Error saving offline posts:", error)

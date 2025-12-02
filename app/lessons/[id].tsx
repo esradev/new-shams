@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import { Link } from "expo-router"
 import { View, Text, ScrollView } from "react-native"
 import { BookOpen, Calendar, User } from "lucide-react-native"
@@ -8,56 +8,60 @@ import { useLocalSearchParams } from "expo-router"
 
 import AudioPlayer from "@/components/audio-player"
 import LessonActions from "@/components/lesson-actions"
+import LoadingSpinner from "@/components/loading-spinner"
 import { useColorScheme } from "nativewind"
-import { createHighlightedHTML } from "@/utils/text-highlight"
+import { useLesson } from "@/hooks/use-lesson"
+import { createHighlightedHTMLAsync } from "@/utils/text-highlight"
 
 export default function LessonPage() {
-  const {
-    id,
-    categorayId,
-    categorayName,
-    postTitle,
-    postContent,
-    postAudioSrc,
-    postDate,
-    searchQuery
-  } = useLocalSearchParams()
-
+  const { id, categoryId, categoryName, searchQuery } = useLocalSearchParams()
   const { colorScheme } = useColorScheme()
+  const { lesson, loading, error } = useLesson(id)
 
-  console.log("Lesson Page Params:", {
-    id,
-    categorayId,
-    categorayName,
-    postTitle,
-    postContent,
-    postAudioSrc,
-    postDate,
-    searchQuery
-  })
+  const [processedContent, setProcessedContent] = useState<string>("")
+  const [contentLoading, setContentLoading] = useState(false)
 
-  // Format the date properly
-  const formattedDate = typeof postDate === "string" ? postDate : postDate
+  // Process content with highlighting asynchronously
+  useEffect(() => {
+    if (!lesson?.content?.rendered) return
 
-  // Prepare content with search highlighting
-  const processedContent = () => {
-    const content =
-      (Array.isArray(postContent) ? postContent[0] : postContent) ||
-      `<div style="text-align: right; padding: 20px;">
-        <p style="color: #78716c; font-style: italic;">
-          متأسفانه محتوای این جلسه در حال حاضر در دسترس نیست. لطفا بعدا دوباره مراجعه کنید.
-        </p>
-      </div>`
+    const processContent = async () => {
+      setContentLoading(true)
+      try {
+        let content = lesson.content.rendered
 
-    if (searchQuery && typeof searchQuery === "string" && searchQuery.trim()) {
-      return createHighlightedHTML(content, searchQuery, colorScheme === "dark")
+        // Apply search highlighting if search query exists
+        if (
+          searchQuery &&
+          typeof searchQuery === "string" &&
+          searchQuery.trim()
+        ) {
+          content = await createHighlightedHTMLAsync(
+            content,
+            searchQuery,
+            colorScheme === "dark"
+          )
+        }
+
+        setProcessedContent(content)
+      } catch (err) {
+        console.warn("Content processing failed:", err)
+        setProcessedContent(lesson.content.rendered)
+      } finally {
+        setContentLoading(false)
+      }
     }
 
-    return content
-  }
+    processContent()
+  }, [lesson?.content?.rendered, searchQuery, colorScheme])
 
-  // Function to highlight text in title
-  const highlightTitle = (title: string, query: string) => {
+  // Function to highlight text in title using React components
+  const highlightTitle = useMemo(() => {
+    if (!lesson?.title?.rendered) return ""
+
+    const title = lesson.title.rendered
+    const query = typeof searchQuery === "string" ? searchQuery : ""
+
     if (!query || !query.trim()) return title
 
     const parts = title.split(new RegExp(`(${query})`, "gi"))
@@ -73,6 +77,40 @@ export default function LessonPage() {
         {part}
       </Text>
     ))
+  }, [lesson?.title?.rendered, searchQuery])
+
+  // Loading state
+  if (loading) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView className="flex-1 bg-stone-50 dark:bg-stone-950">
+          <View className="flex-1 items-center justify-center">
+            <LoadingSpinner />
+            <Text className="text-stone-600 dark:text-stone-400 mt-4 text-center">
+              در حال بارگذاری درس...
+            </Text>
+          </View>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    )
+  }
+
+  // Error state
+  if (error || !lesson) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView className="flex-1 bg-stone-50 dark:bg-stone-950">
+          <View className="flex-1 items-center justify-center p-4">
+            <Text className="text-red-500 text-lg font-bold text-center mb-4">
+              خطا در بارگذاری درس
+            </Text>
+            <Text className="text-stone-600 dark:text-stone-400 text-center">
+              {error || "درس یافت نشد"}
+            </Text>
+          </View>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    )
   }
 
   return (
@@ -83,13 +121,13 @@ export default function LessonPage() {
           <View className="flex flex-row items-center justify-end">
             <View className="flex flex-row items-center gap-2">
               <Text className="text-sm font-medium text-stone-700 dark:text-stone-300">
-                {postTitle}
+                {lesson.title.rendered}
               </Text>
               <Text className="text-stone-500 dark:text-stone-500">{"<"}</Text>
 
-              <Link href={`/categories/${categorayId}`}>
+              <Link href={`/categories/${categoryId}`}>
                 <Text className="text-sm font-medium text-stone-700 dark:text-stone-300">
-                  {categorayName}
+                  {categoryName}
                 </Text>
               </Link>
               <Text className="text-stone-500 dark:text-stone-500">{"<"}</Text>
@@ -106,7 +144,7 @@ export default function LessonPage() {
           showsVerticalScrollIndicator={false}
           className="flex-1"
           contentContainerStyle={{
-            paddingBottom: postAudioSrc ? 160 : 40,
+            paddingBottom: lesson.meta?.["the-audio-of-the-lesson"] ? 160 : 40,
             paddingHorizontal: 16
           }}
         >
@@ -117,7 +155,7 @@ export default function LessonPage() {
               <View className="mb-6">
                 <View className="flex flex-row items-center justify-end gap-3 bg-emerald-50 dark:bg-emerald-900/20 self-end rounded-full px-4 py-2">
                   <Text className="text-base font-medium text-emerald-700 dark:text-emerald-400">
-                    {categorayName}
+                    {categoryName}
                   </Text>
                   <BookOpen
                     size={18}
@@ -131,8 +169,8 @@ export default function LessonPage() {
                 {searchQuery &&
                 typeof searchQuery === "string" &&
                 searchQuery.trim()
-                  ? highlightTitle(postTitle as string, searchQuery)
-                  : postTitle}
+                  ? highlightTitle
+                  : lesson.title.rendered}
               </Text>
 
               {/* Meta Information */}
@@ -147,10 +185,10 @@ export default function LessonPage() {
                   />
                 </View>
 
-                {formattedDate && (
+                {lesson.meta?.["date-of-the-lesson"] && (
                   <View className="flex flex-row items-center justify-end gap-3">
                     <Text className="text-base text-stone-600 dark:text-stone-400">
-                      {formattedDate}
+                      {lesson.meta["date-of-the-lesson"]}
                     </Text>
                     <Calendar
                       size={16}
@@ -182,102 +220,116 @@ export default function LessonPage() {
                   </View>
                 )}
 
-              <RenderHTML
-                source={{
-                  html: processedContent()
-                }}
-                contentWidth={350}
-                baseStyle={{
-                  backgroundColor: "transparent",
-                  fontSize: 18,
-                  lineHeight: 32,
-                  color: colorScheme === "dark" ? "#e7e5e4" : "#44403c",
-                  textAlign: "right",
-                  fontFamily: "System"
-                }}
-                tagsStyles={{
-                  p: {
-                    marginBottom: 20,
-                    textAlign: "right"
-                  },
-                  h1: {
-                    fontSize: 28,
-                    fontWeight: "bold",
-                    marginBottom: 20,
+              {/* Content Loading State */}
+              {contentLoading ? (
+                <View className="py-8 items-center">
+                  <LoadingSpinner />
+                  <Text className="text-center text-sm text-stone-500 dark:text-stone-400 mt-2">
+                    در حال پردازش محتوا...
+                  </Text>
+                </View>
+              ) : (
+                <RenderHTML
+                  source={{
+                    html:
+                      processedContent ||
+                      lesson.content?.rendered ||
+                      `<div style="text-align: right; padding: 20px;">
+                      <p style="color: #78716c; font-style: italic;">
+                        متأسفانه محتوای این جلسه در حال حاضر در دسترس نیست. لطفا بعدا دوباره مراجعه کنید.
+                      </p>
+                    </div>`
+                  }}
+                  contentWidth={350}
+                  baseStyle={{
+                    backgroundColor: "transparent",
+                    fontSize: 18,
+                    lineHeight: 32,
+                    color: colorScheme === "dark" ? "#e7e5e4" : "#44403c",
                     textAlign: "right",
-                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
-                  },
-                  h2: {
-                    fontSize: 24,
-                    fontWeight: "600",
-                    marginBottom: 16,
-                    textAlign: "right",
-                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
-                  },
-                  h3: {
-                    fontSize: 20,
-                    fontWeight: "600",
-                    marginBottom: 12,
-                    textAlign: "right",
-                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
-                  },
-                  ul: {
-                    paddingLeft: 0,
-                    paddingRight: 20,
-                    textAlign: "right"
-                  },
-                  ol: {
-                    paddingLeft: 0,
-                    paddingRight: 20,
-                    textAlign: "right"
-                  },
-                  li: {
-                    marginBottom: 12,
-                    textAlign: "right"
-                  },
-                  strong: {
-                    fontWeight: "bold",
-                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
-                  },
-                  em: {
-                    fontStyle: "italic"
-                  },
-                  blockquote: {
-                    borderRightWidth: 4,
-                    borderRightColor:
-                      colorScheme === "dark" ? "#525252" : "#d6d3d1",
-                    paddingRight: 20,
-                    marginVertical: 20,
-                    backgroundColor:
-                      colorScheme === "dark" ? "#292524" : "#f7f7f6",
-                    paddingVertical: 16,
-                    textAlign: "right"
-                  },
-                  mark: {
-                    backgroundColor:
-                      colorScheme === "dark" ? "#451a03" : "#fef3c7",
-                    color: colorScheme === "dark" ? "#fbbf24" : "#92400e",
-                    padding: 4,
-                    borderRadius: 4,
-                    fontWeight: "600"
-                  }
-                }}
-              />
+                    fontFamily: "System"
+                  }}
+                  tagsStyles={{
+                    p: {
+                      marginBottom: 20,
+                      textAlign: "right"
+                    },
+                    h1: {
+                      fontSize: 28,
+                      fontWeight: "bold",
+                      marginBottom: 20,
+                      textAlign: "right",
+                      color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
+                    },
+                    h2: {
+                      fontSize: 24,
+                      fontWeight: "600",
+                      marginBottom: 16,
+                      textAlign: "right",
+                      color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
+                    },
+                    h3: {
+                      fontSize: 20,
+                      fontWeight: "600",
+                      marginBottom: 12,
+                      textAlign: "right",
+                      color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
+                    },
+                    ul: {
+                      paddingLeft: 0,
+                      paddingRight: 20,
+                      textAlign: "right"
+                    },
+                    ol: {
+                      paddingLeft: 0,
+                      paddingRight: 20,
+                      textAlign: "right"
+                    },
+                    li: {
+                      marginBottom: 12,
+                      textAlign: "right"
+                    },
+                    strong: {
+                      fontWeight: "bold",
+                      color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
+                    },
+                    em: {
+                      fontStyle: "italic"
+                    },
+                    blockquote: {
+                      borderRightWidth: 4,
+                      borderRightColor:
+                        colorScheme === "dark" ? "#525252" : "#d6d3d1",
+                      paddingRight: 20,
+                      marginVertical: 20,
+                      backgroundColor:
+                        colorScheme === "dark" ? "#292524" : "#f7f7f6",
+                      paddingVertical: 16,
+                      textAlign: "right"
+                    },
+                    mark: {
+                      backgroundColor:
+                        colorScheme === "dark" ? "#451a03" : "#fef3c7",
+                      color: colorScheme === "dark" ? "#fbbf24" : "#92400e",
+                      padding: 4,
+                      borderRadius: 4,
+                      fontWeight: "600"
+                    }
+                  }}
+                />
+              )}
             </View>
           </View>
 
           {/* Lesson Actions */}
           <View className="mt-6">
             <LessonActions
-              lessonId={id as string}
-              lessonTitle={postTitle as string}
-              categoryId={categorayId as string}
-              categoryName={categorayName as string}
-              content={
-                (Array.isArray(postContent) ? postContent[0] : postContent) ||
-                ""
-              }
-              audioUrl={postAudioSrc as string}
+              lessonId={lesson.id.toString()}
+              lessonTitle={lesson.title.rendered}
+              categoryId={categoryId as string}
+              categoryName={categoryName as string}
+              content={lesson.content?.rendered || ""}
+              audioUrl={lesson.meta?.["the-audio-of-the-lesson"] || ""}
             />
           </View>
 
@@ -286,16 +338,14 @@ export default function LessonPage() {
         </ScrollView>
 
         {/* Audio Player */}
-        {postAudioSrc && (
+        {lesson.meta?.["the-audio-of-the-lesson"] && (
           <AudioPlayer
-            id={id}
-            postAudioSrc={postAudioSrc}
-            postTitle={postTitle}
-            categoryId={
-              Array.isArray(categorayId) ? categorayId[0] : categorayId
-            }
+            id={lesson.id}
+            postAudioSrc={lesson.meta["the-audio-of-the-lesson"]}
+            postTitle={lesson.title.rendered}
+            categoryId={Array.isArray(categoryId) ? categoryId[0] : categoryId}
             categoryName={
-              Array.isArray(categorayName) ? categorayName[0] : categorayName
+              Array.isArray(categoryName) ? categoryName[0] : categoryName
             }
           />
         )}
