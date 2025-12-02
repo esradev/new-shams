@@ -50,8 +50,7 @@
           }
         }
       ],
-      "expo-asset",
-      "react-native-mmkv"
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
