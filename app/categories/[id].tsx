@@ -247,10 +247,10 @@ const Categories = () => {
                                   {lesson.title.rendered}
                                 </Text>
                                 <View className="flex flex-row-reverse items-center flex-wrap gap-3">
-                                  {lesson.duration && (
+                                  {lesson.meta?.["date-of-the-lesson"] && (
                                     <View className="flex flex-row-reverse items-center">
                                       <Text className="text-sm text-gray-600 dark:text-gray-400 mr-1">
-                                        {lesson.duration}
+                                        {lesson.meta?.["date-of-the-lesson"]}
                                       </Text>
                                     </View>
                                   )}
@@ -315,7 +315,8 @@ const Categories = () => {
                               {lesson?.title?.rendered}
                             </Text>
                             <Text className="text-base text-gray-500 dark:text-gray-500 text-right dir-rtl">
-                              {lesson?.duration || "00:00"}
+                              {lesson.meta?.["date-of-the-lesson"] ||
+                                "تاریخ نامشخص"}
                             </Text>
                           </View>
                           {isLessonCompleted(lesson.id.toString()) && (
