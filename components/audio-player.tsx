@@ -1,14 +1,18 @@
 import React from "react"
-import { View, Pressable, Text, ActivityIndicator } from "react-native"
+import { View, Pressable, Text, ActivityIndicator, Modal } from "react-native"
 import Slider from "@react-native-community/slider"
 
 import {
   Play,
   Pause,
   Download,
+  DownloadCloud,
+  CheckCircle,
   ChevronsLeft,
   ChevronsRight,
-  Gauge
+  Gauge,
+  X,
+  CheckCircle2
 } from "lucide-react-native"
 
 import { useAudioPlayer } from "@/hooks/use-audio-player"
@@ -30,6 +34,7 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
       handleForward,
       handleBackward,
       handleDownload,
+      confirmDelete,
       formatTime,
       currentTime,
       duration,
@@ -37,6 +42,11 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
       handlePlaybackRateToggle,
       isDownloading,
       isDownloaded,
+      showDeleteDialog,
+      setShowDeleteDialog,
+      showSuccessModal,
+      setShowSuccessModal,
+      successMessage,
       isFileSystemAvailable,
       isLoaded,
       isBuffering
@@ -133,7 +143,11 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.1,
                 shadowRadius: 4,
-                elevation: 2
+                elevation: 2,
+                // Add a subtle border for enhanced appearance
+                borderWidth: !isLoaded || isBuffering ? 0 : 1,
+                borderColor:
+                  !isLoaded || isBuffering ? "transparent" : "#059669"
               }}
               aria-label={isPlaying ? "Pause" : "Play"}
             >
@@ -176,16 +190,196 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
               >
                 {isDownloading ? (
                   <ActivityIndicator size="small" color="#6B7280" />
-                ) : (
-                  <Download
+                ) : isDownloaded ? (
+                  <CheckCircle
                     size={16}
-                    color={isDownloaded ? "#10B981" : "#6B7280"}
+                    color="#10B981"
+                    fill="rgba(16, 185, 129, 0.2)"
                   />
+                ) : (
+                  <DownloadCloud size={16} color="#6B7280" />
                 )}
               </Pressable>
             )}
           </View>
         </View>
+
+        {/* Custom Delete Confirmation Modal */}
+        <Modal
+          visible={showDeleteDialog}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowDeleteDialog(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: 20
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "white",
+                borderRadius: 16,
+                padding: 24,
+                width: "90%",
+                maxWidth: 400,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.25,
+                shadowRadius: 16,
+                elevation: 8
+              }}
+              className="bg-white dark:bg-gray-900"
+            >
+              {/* Header */}
+              <View className="flex flex-row items-center justify-between mb-4">
+                <Pressable
+                  onPress={() => setShowDeleteDialog(false)}
+                  style={{
+                    padding: 4,
+                    borderRadius: 6
+                  }}
+                  className="active:bg-gray-100 dark:active:bg-gray-800"
+                >
+                  <X size={20} color="#6B7280" />
+                </Pressable>
+                <Text className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  حذف فایل دانلود شده
+                </Text>
+              </View>
+
+              {/* Content */}
+              <Text className="text-gray-700 dark:text-gray-300 mb-6 leading-6 text-right">
+                این درس قبلاً دانلود شده است. آیا می‌خواهید فایل دانلود شده را
+                حذف کنید؟
+              </Text>
+
+              {/* Action buttons */}
+              <View className="flex flex-row gap-x-3">
+                <Pressable
+                  onPress={() => setShowDeleteDialog(false)}
+                  style={{
+                    flex: 1,
+                    padding: 12,
+                    borderRadius: 8,
+                    backgroundColor: "#F3F4F6",
+                    borderWidth: 1,
+                    borderColor: "#E5E7EB"
+                  }}
+                  className="bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                >
+                  <Text className="text-gray-700 dark:text-gray-300 text-center font-medium">
+                    انصراف
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={confirmDelete}
+                  style={{
+                    flex: 1,
+                    padding: 12,
+                    borderRadius: 8,
+                    backgroundColor: "#EF4444",
+                    shadowColor: "#DC2626",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 2
+                  }}
+                >
+                  <Text className="text-white text-center font-medium">
+                    حذف فایل
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Success Modal */}
+        <Modal
+          visible={showSuccessModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowSuccessModal(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: 20
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "white",
+                borderRadius: 16,
+                padding: 24,
+                width: "90%",
+                maxWidth: 400,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.25,
+                shadowRadius: 16,
+                elevation: 8,
+                alignItems: "center"
+              }}
+              className="bg-white dark:bg-gray-900"
+            >
+              {/* Success Icon */}
+              <View
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  backgroundColor: "rgba(16, 185, 129, 0.1)",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginBottom: 16
+                }}
+              >
+                <CheckCircle2 size={32} color="#10B981" />
+              </View>
+
+              {/* Title */}
+              <Text className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 text-center">
+                {successMessage.title}
+              </Text>
+
+              {/* Message */}
+              <Text className="text-gray-700 dark:text-gray-300 mb-8 leading-6 text-center">
+                {successMessage.message}
+              </Text>
+
+              {/* OK Button */}
+              <Pressable
+                onPress={() => setShowSuccessModal(false)}
+                style={{
+                  paddingHorizontal: 32,
+                  paddingVertical: 12,
+                  borderRadius: 8,
+                  backgroundColor: "#10B981",
+                  shadowColor: "#059669",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 2,
+                  minWidth: 120
+                }}
+              >
+                <Text className="text-white text-center font-medium">
+                  متوجه شدم
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
       </View>
     )
   }

@@ -20,6 +20,13 @@ export function useAudioPlayerHook(
   const [playbackRate, setPlaybackRate] = useState(1)
   const [fileUri, setFileUri] = useState<string | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isMuted, setIsMuted] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successMessage, setSuccessMessage] = useState({
+    title: "",
+    message: ""
+  })
 
   const { addToDownloads, isLessonDownloaded, removeFromDownloads } =
     useLocalStorage()
@@ -50,12 +57,12 @@ export function useAudioPlayerHook(
     initializeAudio()
   }, [])
 
-  // Set initial volume
+  // Set initial volume and handle mute
   useEffect(() => {
     if (player && status.isLoaded) {
-      player.volume = volume
+      player.volume = isMuted ? 0 : volume
     }
-  }, [player, status.isLoaded, volume])
+  }, [player, status.isLoaded, volume, isMuted])
 
   // Set playback rate with preservesPitch to maintain audio quality
   useEffect(() => {
@@ -189,6 +196,18 @@ export function useAudioPlayerHook(
     }
   }, [player, status.currentTime])
 
+  const toggleMute = useCallback(() => {
+    if (player) {
+      try {
+        const newMutedState = !isMuted
+        setIsMuted(newMutedState)
+        player.volume = newMutedState ? 0 : volume
+      } catch (error) {
+        console.error("Error toggling mute:", error)
+      }
+    }
+  }, [player, isMuted, volume])
+
   const handleVolumeChange = useCallback(
     (value: number) => {
       if (player) {
@@ -221,37 +240,7 @@ export function useAudioPlayerHook(
 
     // Check if already downloaded
     if (isLessonDownloaded(id)) {
-      Alert.alert(
-        "حذف دانلود",
-        "این درس قبلاً دانلود شده است. آیا می‌خواهید آن را حذف کنید؟",
-        [
-          { text: "لغو", style: "cancel" },
-          {
-            text: "حذف",
-            style: "destructive",
-            onPress: async () => {
-              try {
-                if (isFileSystemAvailable()) {
-                  const fileName = `audio_${id}.mp3`
-                  const audioFile = new File(Paths.cache, fileName)
-
-                  if (audioFile.exists) {
-                    audioFile.delete()
-                  }
-                }
-
-                await removeFromDownloads(id)
-                setFileUri(null)
-
-                Alert.alert("موفق", "فایل با موفقیت حذف شد")
-              } catch (error) {
-                console.error("Error deleting download:", error)
-                Alert.alert("خطا", "خطا در حذف فایل")
-              }
-            }
-          }
-        ]
-      )
+      setShowDeleteDialog(true)
       return
     }
 
@@ -259,22 +248,34 @@ export function useAudioPlayerHook(
 
     try {
       const fileName = `audio_${id}.mp3`
-      const cacheDirectory = new Directory(Paths.cache)
+
+      // Create cache directory reference
+      const cacheDirectory =
+        typeof Paths.cache === "string"
+          ? new Directory(Paths.cache)
+          : Paths.cache
 
       // Ensure cache directory exists
       if (!cacheDirectory.exists) {
         cacheDirectory.create({ intermediates: true })
       }
 
-      if (__DEV__) {
-        console.log("Starting download from:", postAudioSrc)
-        console.log("Saving to cache directory:", Paths.cache)
+      // Check if file already exists and remove it first
+      const existingFile = new File(cacheDirectory, fileName)
+      if (existingFile.exists) {
+        existingFile.delete()
       }
 
-      // Download the file using modern API
+      if (__DEV__) {
+        console.log("Starting download from:", postAudioSrc)
+        console.log("Saving to cache directory:", cacheDirectory)
+      }
+
+      // Download the file using modern API with idempotent option
       const downloadedFile = await File.downloadFileAsync(
         postAudioSrc,
-        cacheDirectory
+        cacheDirectory,
+        { idempotent: true }
       )
 
       if (__DEV__) {
@@ -301,16 +302,17 @@ export function useAudioPlayerHook(
         })
 
         setFileUri(downloadedFile.uri)
-        Alert.alert(
-          "دانلود موفق",
-          `فایل صوتی "${
+        setSuccessMessage({
+          title: "دانلود موفق",
+          message: `فایل صوتی "${
             postTitle || `درس ${id}`
           }" با موفقیت دانلود شد.\n\nحجم فایل: ${
             fileSize > 0
               ? Math.round((fileSize / 1024 / 1024) * 100) / 100 + " مگابایت"
               : "نامشخص"
           }`
-        )
+        })
+        setShowSuccessModal(true)
       } else {
         throw new Error("Download completed but file does not exist")
       }
@@ -351,6 +353,37 @@ export function useAudioPlayerHook(
     addToDownloads,
     removeFromDownloads
   ])
+
+  const confirmDelete = useCallback(async () => {
+    try {
+      if (isFileSystemAvailable()) {
+        const fileName = `audio_${id}.mp3`
+        const cacheDirectory =
+          typeof Paths.cache === "string"
+            ? new Directory(Paths.cache)
+            : Paths.cache
+        const audioFile = new File(cacheDirectory, fileName)
+
+        if (audioFile.exists) {
+          audioFile.delete()
+        }
+      }
+
+      await removeFromDownloads(id)
+      setFileUri(null)
+      setShowDeleteDialog(false)
+
+      setSuccessMessage({
+        title: "موفق",
+        message: "فایل با موفقیت حذف شد"
+      })
+      setShowSuccessModal(true)
+    } catch (error) {
+      console.error("Error deleting download:", error)
+      Alert.alert("خطا", "خطا در حذف فایل")
+      setShowDeleteDialog(false)
+    }
+  }, [id, isFileSystemAvailable, removeFromDownloads])
 
   const formatTime = useCallback((timeInSeconds: number) => {
     const minutes = Math.floor(timeInSeconds / 60)
@@ -402,12 +435,19 @@ export function useAudioPlayerHook(
     handleSeek,
     handleForward,
     handleBackward,
-    handleVolumeChange,
+    toggleMute,
     handleDownload,
+    confirmDelete,
     formatTime,
 
     // State management
     volume,
+    isMuted,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    showSuccessModal,
+    setShowSuccessModal,
+    successMessage,
     expanded,
     setExpanded,
     playbackRate,
