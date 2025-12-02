@@ -13,7 +13,6 @@ import * as FileSystem from "expo-file-system"
 import { Platform } from "react-native"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
 import {
-  User,
   Activity,
   Download,
   Trash2,

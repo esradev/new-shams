@@ -5,7 +5,8 @@ import {
   setAudioModeAsync
 } from "expo-audio"
 import { File, Directory, Paths } from "expo-file-system"
-import { Alert, Platform } from "react-native"
+import { Platform } from "react-native"
+import { toast } from "sonner-native"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 
 export function useAudioPlayerHook(
@@ -23,11 +24,6 @@ export function useAudioPlayerHook(
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [isMuted, setIsMuted] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [successMessage, setSuccessMessage] = useState({
-    title: "",
-    message: ""
-  })
 
   const { addToDownloads, isLessonDownloaded, removeFromDownloads } =
     useLocalStorage()
@@ -209,17 +205,13 @@ export function useAudioPlayerHook(
 
   const handleDownload = useCallback(async () => {
     if (!postAudioSrc || !id) {
-      Alert.alert("خطا", "اطلاعات فایل صوتی در دسترس نیست")
+      toast.error("اطلاعات فایل صوتی در دسترس نیست")
       return
     }
 
     // Check if FileSystem is available
     if (!isFileSystemAvailable()) {
-      Alert.alert(
-        "عدم پشتیبانی دانلود",
-        "قابلیت دانلود فایل در این دستگاه/پلتفرم پشتیبانی نمی‌شود.\n\nاما شما می‌توانید از پخش آنلاین استفاده کنید.",
-        [{ text: "متوجه شدم", style: "default" }]
-      )
+      toast.error("قابلیت دانلود فایل در این دستگاه/پلتفرم پشتیبانی نمی‌شود")
       return
     }
 
@@ -294,17 +286,17 @@ export function useAudioPlayerHook(
         })
 
         setFileUri(downloadedFile.uri)
-        setSuccessMessage({
-          title: "دانلود موفق",
-          message: `فایل صوتی "${
+
+        const fileSizeText =
+          fileSize > 0
+            ? Math.round((fileSize / 1024 / 1024) * 100) / 100 + " مگابایت"
+            : "نامشخص"
+
+        toast.success(
+          `فایل صوتی "${
             postTitle || `درس ${id}`
-          }" با موفقیت دانلود شد.\n\nحجم فایل: ${
-            fileSize > 0
-              ? Math.round((fileSize / 1024 / 1024) * 100) / 100 + " مگابایت"
-              : "نامشخص"
-          }`
-        })
-        setShowSuccessModal(true)
+          }" با موفقیت دانلود شد (${fileSizeText})`
+        )
       } else {
         throw new Error("Download completed but file does not exist")
       }
@@ -315,25 +307,14 @@ export function useAudioPlayerHook(
       }
 
       if (error instanceof Error && error.message.includes("Cache directory")) {
-        Alert.alert(
-          "خطا در سیستم فایل",
-          "متأسفانه دسترسی به سیستم فایل دستگاه امکان‌پذیر نیست.\n\nاحتمالاً این مشکل مربوط به تنظیمات دستگاه یا نسخه اپلیکیشن است.",
-          [{ text: "متوجه شدم", style: "default" }]
-        )
+        toast.error("متأسفانه دسترسی به سیستم فایل دستگاه امکان‌پذیر نیست")
         return
       }
 
       const errorMessage =
         error instanceof Error ? error.message : "خطای نامشخص"
 
-      Alert.alert(
-        "خطا در دانلود",
-        `مشکلی در دانلود فایل پیش آمد:\n\n${errorMessage}\n\nلطفاً موارد زیر را بررسی کنید:\n• اتصال اینترنت\n• فضای خالی دستگاه\n• مجوزهای اپلیکیشن`,
-        [
-          { text: "تلاش مجدد", onPress: () => handleDownload() },
-          { text: "انصراف", style: "cancel" }
-        ]
-      )
+      toast.error(`مشکلی در دانلود فایل پیش آمد: ${errorMessage}`)
     } finally {
       setIsDownloading(false)
       setDownloadProgress(0)
@@ -369,13 +350,9 @@ export function useAudioPlayerHook(
       setFileUri(null)
       setShowDeleteDialog(false)
 
-      setSuccessMessage({
-        title: "موفق",
-        message: "فایل با موفقیت حذف شد"
-      })
-      setShowSuccessModal(true)
+      toast.success("فایل با موفقیت حذف شد")
     } catch (error) {
-      Alert.alert("خطا", "خطا در حذف فایل")
+      toast.error("خطا در حذف فایل")
       setShowDeleteDialog(false)
     }
   }, [id, isFileSystemAvailable, removeFromDownloads])
@@ -436,9 +413,6 @@ export function useAudioPlayerHook(
     isMuted,
     showDeleteDialog,
     setShowDeleteDialog,
-    showSuccessModal,
-    setShowSuccessModal,
-    successMessage,
     expanded,
     setExpanded,
     playbackRate,

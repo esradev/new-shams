@@ -5,14 +5,11 @@ import Slider from "@react-native-community/slider"
 import {
   Play,
   Pause,
-  Download,
   DownloadCloud,
-  CheckCircle,
   ChevronsLeft,
   ChevronsRight,
   Gauge,
   X,
-  CheckCircle2,
   Trash2
 } from "lucide-react-native"
 
@@ -46,9 +43,6 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
       isDownloaded,
       showDeleteDialog,
       setShowDeleteDialog,
-      showSuccessModal,
-      setShowSuccessModal,
-      successMessage,
       isFileSystemAvailable,
       isLoaded,
       isBuffering
@@ -321,87 +315,6 @@ const AudioPlayer = React.memo<AudioPlayerProps>(
                   </Text>
                 </Pressable>
               </View>
-            </View>
-          </View>
-        </Modal>
-
-        {/* Success Modal */}
-        <Modal
-          visible={showSuccessModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowSuccessModal(false)}
-        >
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              justifyContent: "center",
-              alignItems: "center",
-              padding: 20
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: "white",
-                borderRadius: 16,
-                padding: 24,
-                width: "90%",
-                maxWidth: 400,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.25,
-                shadowRadius: 16,
-                elevation: 8,
-                alignItems: "center"
-              }}
-              className="bg-white dark:bg-gray-900"
-            >
-              {/* Success Icon */}
-              <View
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 32,
-                  backgroundColor: "rgba(16, 185, 129, 0.1)",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  marginBottom: 16
-                }}
-              >
-                <CheckCircle2 size={32} color="#10B981" />
-              </View>
-
-              {/* Title */}
-              <Text className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 text-center">
-                {successMessage.title}
-              </Text>
-
-              {/* Message */}
-              <Text className="text-gray-700 dark:text-gray-300 mb-8 leading-6 text-center">
-                {successMessage.message}
-              </Text>
-
-              {/* OK Button */}
-              <Pressable
-                onPress={() => setShowSuccessModal(false)}
-                style={{
-                  paddingHorizontal: 32,
-                  paddingVertical: 12,
-                  borderRadius: 8,
-                  backgroundColor: "#10B981",
-                  shadowColor: "#059669",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 4,
-                  elevation: 2,
-                  minWidth: 120
-                }}
-              >
-                <Text className="text-white text-center font-medium">
-                  متوجه شدم
-                </Text>
-              </Pressable>
             </View>
           </View>
         </Modal>
