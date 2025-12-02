@@ -1,16 +1,16 @@
-import { View, Text, ScrollView, StatusBar } from "react-native";
-import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import { Href } from "expo-router";
-import { useColorScheme } from "nativewind";
+import { View, Text, ScrollView, StatusBar } from "react-native"
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
+import { Href } from "expo-router"
+import { useColorScheme } from "nativewind"
 
-import CategoryList from "@/components/category-list";
-import CourseCard from "@/components/course-card";
-import LoadingSpinner from "@/components/loading-spinner";
-import { useApi } from "@/context/api-context";
+import CategoryList from "@/components/category-list"
+import CourseCard from "@/components/course-card"
+import LoadingSpinner from "@/components/loading-spinner"
+import { useApi } from "@/context/api-context"
 
 export default function HomePage() {
-  const { colorScheme } = useColorScheme();
-  const { categories, loading, error } = useApi();
+  const { colorScheme } = useColorScheme()
+  const { categories, loading, error } = useApi()
 
   return (
     <SafeAreaProvider>
@@ -20,7 +20,7 @@ export default function HomePage() {
             Error: {error?.message}
           </Text>
         ) : loading ? (
-          <LoadingSpinner variant="courses" count={3} />
+          <LoadingSpinner />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <View className="p-6">
@@ -34,8 +34,8 @@ export default function HomePage() {
                   className="flex flex-row mr-2 flex-1 pb-2 scrollbar-hide text-right dir-rtl"
                 >
                   {categories
-                    .filter((category) => category.parent === 0)
-                    .map((category) => (
+                    .filter(category => category.parent === 0)
+                    .map(category => (
                       <CategoryList
                         key={category.id}
                         href={`/categories/${category.id}` as Href}
@@ -51,8 +51,8 @@ export default function HomePage() {
                 </Text>
                 <View className="grid grid-cols-1 gap-4">
                   {categories
-                    .filter((category) => category.parent !== 0)
-                    .map((category) => (
+                    .filter(category => category.parent !== 0)
+                    .map(category => (
                       <CourseCard
                         key={category.id}
                         href={`/categories/${category.id}` as Href}
@@ -70,5 +70,5 @@ export default function HomePage() {
         />
       </SafeAreaView>
     </SafeAreaProvider>
-  );
+  )
 }

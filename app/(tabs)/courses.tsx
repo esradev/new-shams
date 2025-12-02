@@ -1,13 +1,13 @@
-import { View, Text, ScrollView } from "react-native";
-import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import { Href } from "expo-router";
+import { View, Text, ScrollView } from "react-native"
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
+import { Href } from "expo-router"
 
-import CourseCard from "@/components/course-card";
-import LoadingSpinner from "@/components/loading-spinner";
-import { useApi } from "@/context/api-context";
+import CourseCard from "@/components/course-card"
+import LoadingSpinner from "@/components/loading-spinner"
+import { useApi } from "@/context/api-context"
 
 export default function Courses() {
-  const { categories, loading, error } = useApi();
+  const { categories, loading, error } = useApi()
 
   return (
     <SafeAreaProvider>
@@ -17,7 +17,7 @@ export default function Courses() {
             Error: {error?.message}
           </Text>
         ) : loading ? (
-          <LoadingSpinner variant="courses" count={4} />
+          <LoadingSpinner />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <View className="p-6">
@@ -27,8 +27,8 @@ export default function Courses() {
                 </Text>
                 <View className="grid grid-cols-1 gap-4">
                   {categories
-                    .filter((category) => category.parent !== 0)
-                    .map((category) => (
+                    .filter(category => category.parent !== 0)
+                    .map(category => (
                       <CourseCard
                         key={category.id}
                         href={`/categories/${category.id}` as Href}
@@ -42,5 +42,5 @@ export default function Courses() {
         )}
       </SafeAreaView>
     </SafeAreaProvider>
-  );
+  )
 }

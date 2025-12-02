@@ -97,7 +97,7 @@ const Categories = () => {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
-        <LoadingSpinner variant="lessons" count={5} />
+        <LoadingSpinner />
       </SafeAreaView>
     )
   }
@@ -204,7 +204,7 @@ const Categories = () => {
                 // Search Results
                 searchLoading ? (
                   <View>
-                    <LoadingSpinner variant="search" count={3} />
+                    <LoadingSpinner />
                     <Text className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
                       در حال جستجو...
                     </Text>
@@ -273,7 +273,7 @@ const Categories = () => {
                   </View>
                 )
               ) : loading ? (
-                <LoadingSpinner variant="lessons" count={5} />
+                <LoadingSpinner />
               ) : (
                 // Regular Posts List
                 <View className="gap-y-3">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"
 import {
   View,
   Text,
@@ -7,12 +7,12 @@ import {
   Alert,
   RefreshControl,
   SectionList,
-  FlatList,
-} from "react-native";
-import { router } from "expo-router";
-import * as FileSystem from "expo-file-system";
-import { Platform } from "react-native";
-import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+  FlatList
+} from "react-native"
+import { router } from "expo-router"
+import * as FileSystem from "expo-file-system"
+import { Platform } from "react-native"
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
 import {
   User,
   Activity,
@@ -32,38 +32,38 @@ import {
   ChevronRight,
   Menu,
   Play,
-  FolderOpen,
-} from "lucide-react-native";
+  FolderOpen
+} from "lucide-react-native"
 
 import {
   useLocalStorage,
   UserActivity,
-  DownloadedLesson,
-} from "@/hooks/use-local-storage";
-import { useCache, CacheStats } from "@/context/cache-context";
-import { formatPersianDate } from "@/utils/date-utils";
-import LoadingSpinner from "@/components/loading-spinner";
+  DownloadedLesson
+} from "@/hooks/use-local-storage"
+import { useCache, CacheStats } from "@/context/cache-context"
+import { formatPersianDate } from "@/utils/date-utils"
+import LoadingSpinner from "@/components/loading-spinner"
 
 type SettingsSection =
   | "overview"
   | "activities"
   | "downloads"
   | "cache"
-  | "preferences";
+  | "preferences"
 
 interface MenuItem {
-  id: SettingsSection;
-  title: string;
-  icon: string;
-  description: string;
+  id: SettingsSection
+  title: string
+  icon: string
+  description: string
 }
 
 export default function Settings() {
   const [activeSection, setActiveSection] =
-    useState<SettingsSection>("overview");
-  const [refreshing, setRefreshing] = useState(false);
-  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    useState<SettingsSection>("overview")
+  const [refreshing, setRefreshing] = useState(false)
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   const {
     completedLessons,
@@ -74,32 +74,32 @@ export default function Settings() {
     getStatistics,
     removeFromDownloads,
     clearAllData,
-    loadAllData,
-  } = useLocalStorage();
+    loadAllData
+  } = useLocalStorage()
 
-  const { getCacheStats, clearCache } = useCache();
+  const { getCacheStats, clearCache } = useCache()
 
-  const stats = getStatistics();
+  const stats = getStatistics()
 
   const onRefresh = async () => {
-    setRefreshing(true);
+    setRefreshing(true)
     try {
-      await loadAllData();
-      const stats = await getCacheStats();
-      setCacheStats(stats);
+      await loadAllData()
+      const stats = await getCacheStats()
+      setCacheStats(stats)
     } finally {
-      setRefreshing(false);
+      setRefreshing(false)
     }
-  };
+  }
 
   // Load cache stats on mount and section change
   useEffect(() => {
     const loadCacheStats = async () => {
-      const stats = await getCacheStats();
-      setCacheStats(stats);
-    };
-    loadCacheStats();
-  }, [activeSection]);
+      const stats = await getCacheStats()
+      setCacheStats(stats)
+    }
+    loadCacheStats()
+  }, [activeSection])
 
   // Check if FileSystem is available
   const isFileSystemAvailable = () => {
@@ -109,15 +109,15 @@ export default function Settings() {
         FileSystem &&
         typeof (FileSystem as any).documentDirectory !== "undefined" &&
         (FileSystem as any).documentDirectory !== null
-      );
+      )
     } catch (error) {
-      return false;
+      return false
     }
-  };
+  }
 
   const handleDeleteDownload = async (
     lessonId: string,
-    lessonTitle: string,
+    lessonTitle: string
   ) => {
     Alert.alert(
       "حذف دانلود",
@@ -131,25 +131,27 @@ export default function Settings() {
             try {
               // Remove from device storage
               if (isFileSystemAvailable()) {
-                const fileName = `audio_${lessonId}.mp3`;
-                const localUri = `${(FileSystem as any).documentDirectory}${fileName}`;
+                const fileName = `audio_${lessonId}.mp3`
+                const localUri = `${
+                  (FileSystem as any).documentDirectory
+                }${fileName}`
 
-                const fileInfo = await FileSystem.getInfoAsync(localUri);
+                const fileInfo = await FileSystem.getInfoAsync(localUri)
                 if (fileInfo.exists) {
-                  await FileSystem.deleteAsync(localUri);
+                  await FileSystem.deleteAsync(localUri)
                 }
               }
 
               // Remove from local storage
-              await removeFromDownloads(lessonId);
+              await removeFromDownloads(lessonId)
             } catch (error) {
-              Alert.alert("خطا", "مشکلی در حذف فایل پیش آمد");
+              Alert.alert("خطا", "مشکلی در حذف فایل پیش آمد")
             }
-          },
-        },
-      ],
-    );
-  };
+          }
+        }
+      ]
+    )
+  }
 
   const handleClearAllData = () => {
     Alert.alert(
@@ -162,16 +164,16 @@ export default function Settings() {
           style: "destructive",
           onPress: async () => {
             try {
-              await clearAllData();
-              Alert.alert("موفق", "تمام اطلاعات حذف شد");
+              await clearAllData()
+              Alert.alert("موفق", "تمام اطلاعات حذف شد")
             } catch (error) {
-              Alert.alert("خطا", "مشکلی در حذف اطلاعات پیش آمد");
+              Alert.alert("خطا", "مشکلی در حذف اطلاعات پیش آمد")
             }
-          },
-        },
-      ],
-    );
-  };
+          }
+        }
+      ]
+    )
+  }
 
   const handleClearAllDownloads = () => {
     Alert.alert(
@@ -188,36 +190,38 @@ export default function Settings() {
               for (const lesson of downloadedLessons) {
                 try {
                   if (isFileSystemAvailable()) {
-                    const fileName = `audio_${lesson.id}.mp3`;
-                    const localUri = `${(FileSystem as any).documentDirectory}${fileName}`;
+                    const fileName = `audio_${lesson.id}.mp3`
+                    const localUri = `${
+                      (FileSystem as any).documentDirectory
+                    }${fileName}`
 
-                    const fileInfo = await FileSystem.getInfoAsync(localUri);
+                    const fileInfo = await FileSystem.getInfoAsync(localUri)
                     if (fileInfo.exists) {
-                      await FileSystem.deleteAsync(localUri);
+                      await FileSystem.deleteAsync(localUri)
                     }
                   }
                 } catch (error) {
                   console.error(
                     `Error deleting file for lesson ${lesson.id}:`,
-                    error,
-                  );
+                    error
+                  )
                 }
               }
 
               // Clear from local storage
               for (const lesson of downloadedLessons) {
-                await removeFromDownloads(lesson.id);
+                await removeFromDownloads(lesson.id)
               }
 
-              Alert.alert("موفق", "تمام فایل‌های دانلود شده حذف شدند");
+              Alert.alert("موفق", "تمام فایل‌های دانلود شده حذف شدند")
             } catch (error) {
-              Alert.alert("خطا", "مشکلی در حذف فایل‌ها پیش آمد");
+              Alert.alert("خطا", "مشکلی در حذف فایل‌ها پیش آمد")
             }
-          },
-        },
-      ],
-    );
-  };
+          }
+        }
+      ]
+    )
+  }
 
   const handleOpenLesson = (lesson: DownloadedLesson) => {
     router.push({
@@ -229,97 +233,97 @@ export default function Settings() {
         postTitle: lesson.title,
         postContent: lesson.content || "",
         postAudioSrc: lesson.audioUrl || "",
-        postDate: new Date(lesson.downloadedAt).toISOString(),
-      },
-    });
-  };
+        postDate: new Date(lesson.downloadedAt).toISOString()
+      }
+    })
+  }
 
   const formatBytes = (bytes: number) => {
-    if (bytes === 0) return "0 بایت";
-    const k = 1024;
-    const sizes = ["بایت", "کیلوبایت", "مگابایت", "گیگابایت"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
+    if (bytes === 0) return "0 بایت"
+    const k = 1024
+    const sizes = ["بایت", "کیلوبایت", "مگابایت", "گیگابایت"]
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+  }
 
   const formatActivityTime = (timestamp: number) => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+    const now = Date.now()
+    const diff = now - timestamp
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(minutes / 60)
+    const days = Math.floor(hours / 24)
 
-    if (days > 0) return `${days} روز پیش`;
-    if (hours > 0) return `${hours} ساعت پیش`;
-    if (minutes > 0) return `${minutes} دقیقه پیش`;
-    return "همین الان";
-  };
+    if (days > 0) return `${days} روز پیش`
+    if (hours > 0) return `${hours} ساعت پیش`
+    if (minutes > 0) return `${minutes} دقیقه پیش`
+    return "همین الان"
+  }
 
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "completed":
-        return <CheckCircle size={16} color="#10B981" />;
+        return <CheckCircle size={16} color="#10B981" />
       case "favorited":
-        return <Heart size={16} color="#EC4899" />;
+        return <Heart size={16} color="#EC4899" />
       case "downloaded":
-        return <Download size={16} color="#3B82F6" />;
+        return <Download size={16} color="#3B82F6" />
       default:
-        return <Activity size={16} color="#6B7280" />;
+        return <Activity size={16} color="#6B7280" />
     }
-  };
+  }
 
   const getActivityText = (type: string) => {
     switch (type) {
       case "completed":
-        return "تکمیل شد";
+        return "تکمیل شد"
       case "favorited":
-        return "به علاقه‌مندی‌ها اضافه شد";
+        return "به علاقه‌مندی‌ها اضافه شد"
       case "downloaded":
-        return "دانلود شد";
+        return "دانلود شد"
       default:
-        return "فعالیت";
+        return "فعالیت"
     }
-  };
+  }
 
   const menuItems: MenuItem[] = [
     {
       id: "overview",
       title: "خلاصه",
       icon: "BarChart3",
-      description: "آمار و اطلاعات کلی",
+      description: "آمار و اطلاعات کلی"
     },
     {
       id: "activities",
       title: "فعالیت‌ها",
       icon: "Activity",
-      description: "تاریخچه فعالیت‌های شما",
+      description: "تاریخچه فعالیت‌های شما"
     },
     {
       id: "downloads",
       title: "دانلودها",
       icon: "Download",
-      description: "فایل‌های دانلود شده",
+      description: "فایل‌های دانلود شده"
     },
     {
       id: "cache",
       title: "کش",
       icon: "Database",
-      description: "مدیریت حافظه کش",
+      description: "مدیریت حافظه کش"
     },
     {
       id: "preferences",
       title: "تنظیمات",
       icon: "SettingsIcon",
-      description: "تنظیمات عمومی برنامه",
-    },
-  ];
+      description: "تنظیمات عمومی برنامه"
+    }
+  ]
 
   const renderMenuItem = (item: MenuItem) => (
     <Pressable
       key={item.id}
       onPress={() => {
-        setActiveSection(item.id);
-        setIsDrawerOpen(false);
+        setActiveSection(item.id)
+        setIsDrawerOpen(false)
       }}
       className={`p-4 mx-2 my-1 rounded-xl transition-colors ${
         activeSection === item.id
@@ -389,7 +393,7 @@ export default function Settings() {
         )}
       </View>
     </Pressable>
-  );
+  )
 
   const renderSidebar = () => (
     <View className="w-80 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-xl">
@@ -419,7 +423,7 @@ export default function Settings() {
         {menuItems.map(renderMenuItem)}
       </ScrollView>
     </View>
-  );
+  )
 
   const renderOverview = () => (
     <ScrollView
@@ -531,7 +535,7 @@ export default function Settings() {
         </View>
       </View>
     </ScrollView>
-  );
+  )
 
   const renderCache = () => (
     <ScrollView
@@ -646,17 +650,17 @@ export default function Settings() {
                       style: "destructive",
                       onPress: async () => {
                         try {
-                          await clearCache();
-                          const newStats = await getCacheStats();
-                          setCacheStats(newStats);
-                          Alert.alert("موفق", "کش پاک شد");
+                          await clearCache()
+                          const newStats = await getCacheStats()
+                          setCacheStats(newStats)
+                          Alert.alert("موفق", "کش پاک شد")
                         } catch (error) {
-                          Alert.alert("خطا", "مشکلی در پاک کردن کش پیش آمد");
+                          Alert.alert("خطا", "مشکلی در پاک کردن کش پیش آمد")
                         }
-                      },
-                    },
-                  ],
-                );
+                      }
+                    }
+                  ]
+                )
               }}
               className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-4 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/30 active:scale-98"
             >
@@ -674,7 +678,7 @@ export default function Settings() {
         </View>
       </View>
     </ScrollView>
-  );
+  )
 
   const renderActivities = () => (
     <FlatList
@@ -682,7 +686,7 @@ export default function Settings() {
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
-      keyExtractor={(item) => item.id}
+      keyExtractor={item => item.id}
       contentContainerStyle={{ padding: 16 }}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={
@@ -726,7 +730,7 @@ export default function Settings() {
         </View>
       )}
     />
-  );
+  )
 
   const renderDownloads = () => (
     <FlatList
@@ -734,7 +738,7 @@ export default function Settings() {
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
-      keyExtractor={(item) => item.id}
+      keyExtractor={item => item.id}
       contentContainerStyle={{ padding: 16 }}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={
@@ -766,8 +770,8 @@ export default function Settings() {
                     {formatBytes(
                       downloadedLessons.reduce(
                         (total, lesson) => total + (lesson.size || 0),
-                        0,
-                      ),
+                        0
+                      )
                     )}
                   </Text>
                 </View>
@@ -847,7 +851,7 @@ export default function Settings() {
         </Pressable>
       )}
     />
-  );
+  )
 
   const renderPreferences = () => (
     <ScrollView
@@ -917,16 +921,16 @@ export default function Settings() {
         </View>
       </View>
     </ScrollView>
-  );
+  )
 
   if (loading) {
     return (
       <SafeAreaProvider>
         <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
-          <LoadingSpinner variant="settings" />
+          <LoadingSpinner />
         </SafeAreaView>
       </SafeAreaProvider>
-    );
+    )
   }
 
   return (
@@ -950,7 +954,7 @@ export default function Settings() {
                   <Text className="text-gray-700">منوی تنظیمات</Text>
                 </Pressable>
                 <Text className="text-lg font-semibold text-gray-900 dark:text-white text-right dir-rtl">
-                  {menuItems.find((item) => item.id === activeSection)?.title}
+                  {menuItems.find(item => item.id === activeSection)?.title}
                 </Text>
               </View>
             </View>
@@ -980,5 +984,5 @@ export default function Settings() {
         )}
       </SafeAreaView>
     </SafeAreaProvider>
-  );
+  )
 }
