@@ -1,23 +1,23 @@
-import React from "react";
-import { View, Text, Pressable } from "react-native";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import React from "react"
+import { View, Text, Pressable } from "react-native"
+import { ChevronLeft, ChevronRight } from "lucide-react-native"
 
 interface PaginationProps {
-  page: number;
-  totalPages: number;
-  setPage: (page: number) => void;
+  page: number
+  totalPages: number
+  setPage: (page: number) => void
 }
 
 const Pagination: React.FC<PaginationProps> = ({
   page,
   totalPages,
-  setPage,
+  setPage
 }) => {
-  const canGoBack = page > 1;
-  const canGoForward = page < totalPages;
+  const canGoBack = page > 1
+  const canGoForward = page < totalPages
 
   if (totalPages <= 1) {
-    return null;
+    return null
   }
 
   return (
@@ -71,7 +71,7 @@ const Pagination: React.FC<PaginationProps> = ({
         </View>
       </Pressable>
     </View>
-  );
-};
+  )
+}
 
-export default Pagination;
+export default Pagination

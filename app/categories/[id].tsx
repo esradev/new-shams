@@ -2,7 +2,13 @@ import React, { useState, useEffect } from "react"
 import { Text, ScrollView, View, Pressable, TextInput } from "react-native"
 import { useLocalSearchParams, useNavigation, Link } from "expo-router"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { Check, Search as SearchIcon, X } from "lucide-react-native"
+import {
+  Check,
+  Search as SearchIcon,
+  X,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react-native"
 
 import LoadingSpinner from "@/components/loading-spinner"
 import Pagination from "@/components/pagination"
@@ -18,6 +24,7 @@ const Categories = () => {
   const { categories } = useApi()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
 
   const category = categories.find(cat => cat.id === Number(id))
   const { isLessonCompleted } = useLocalStorage()
@@ -128,12 +135,24 @@ const Categories = () => {
 
             {/* Description */}
             <View className="mb-6">
-              <Text className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200 text-right dir-rtl">
-                در مورد درس
-              </Text>
-              <Text className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed text-right dir-rtl">
-                {category?.description}
-              </Text>
+              <Pressable
+                onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                className="flex flex-row-reverse items-center justify-between mb-2"
+              >
+                <Text className="text-lg font-semibold text-gray-800 dark:text-gray-200 text-right dir-rtl">
+                  در مورد درس
+                </Text>
+                {isDescriptionExpanded ? (
+                  <ChevronUp size={20} color="#6B7280" />
+                ) : (
+                  <ChevronDown size={20} color="#6B7280" />
+                )}
+              </Pressable>
+              {isDescriptionExpanded && (
+                <Text className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed text-right dir-rtl">
+                  {category?.description}
+                </Text>
+              )}
             </View>
 
             {/* Search Input */}
@@ -143,7 +162,7 @@ const Categories = () => {
                 <TextInput
                   value={searchQuery}
                   onChangeText={setSearchQuery}
-                  placeholder="جستجو در این دسته..."
+                  placeholder="جستجو در این درس..."
                   placeholderTextColor="#9CA3AF"
                   className="flex-1 text-right dir-rtl text-gray-900 dark:text-white text-base"
                   returnKeyType="search"
@@ -274,7 +293,7 @@ const Categories = () => {
               ) : posts.length === 0 ? (
                 <View className="py-8 items-center">
                   <Text className="text-gray-500 dark:text-gray-400 text-center text-base">
-                    هیچ درسی در این دسته یافت نشد
+                    هیچ درسی در این درس یافت نشد
                   </Text>
                 </View>
               ) : (

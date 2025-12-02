@@ -6,7 +6,6 @@ import {
   Pressable,
   Alert,
   RefreshControl,
-  SectionList,
   FlatList
 } from "react-native"
 import { router } from "expo-router"
