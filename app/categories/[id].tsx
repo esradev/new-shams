@@ -1,68 +1,60 @@
-import React, { useState, useEffect } from "react";
-import {
-  Text,
-  ScrollView,
-  View,
-  Pressable,
-  TextInput,
-  FlatList,
-} from "react-native";
-import { useLocalSearchParams, useNavigation, Link } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Check, Search as SearchIcon, X } from "lucide-react-native";
+import React, { useState, useEffect } from "react"
+import { Text, ScrollView, View, Pressable, TextInput } from "react-native"
+import { useLocalSearchParams, useNavigation, Link } from "expo-router"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { Check, Search as SearchIcon, X } from "lucide-react-native"
 
-import LoadingSpinner from "@/components/loading-spinner";
-import SearchResultCard from "@/components/search-result-card";
-import Pagination from "@/components/pagination";
-import { useApi } from "@/context/api-context";
-import { usePostsByCategory } from "@/hooks/use-posts-by-category";
-import { useSearch } from "@/hooks/use-search";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import { formatPersianDate, isValidDate } from "@/utils/date-utils";
+import LoadingSpinner from "@/components/loading-spinner"
+import Pagination from "@/components/pagination"
+import { useApi } from "@/context/api-context"
+import { usePostsByCategory } from "@/hooks/use-posts-by-category"
+import { useSearch } from "@/hooks/use-search"
+import { useLocalStorage } from "@/hooks/use-local-storage"
+import { formatPersianDate } from "@/utils/date-utils"
 
 const Categories = () => {
-  const { id } = useLocalSearchParams();
-  const navigation = useNavigation();
-  const { categories } = useApi();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const { id } = useLocalSearchParams()
+  const navigation = useNavigation()
+  const { categories } = useApi()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSearching, setIsSearching] = useState(false)
 
-  const category = categories.find((cat) => cat.id === Number(id));
-  const { isLessonCompleted } = useLocalStorage();
+  const category = categories.find(cat => cat.id === Number(id))
+  const { isLessonCompleted } = useLocalStorage()
 
   const { posts, loading, error, page, totalPages, setPage } =
-    usePostsByCategory(id);
+    usePostsByCategory(id)
 
   const {
     posts: searchPosts,
     loading: searchLoading,
     totalPages: searchTotalPages,
     search,
-    clearSearch,
-  } = useSearch();
+    clearSearch
+  } = useSearch()
 
-  const [searchPage, setSearchPage] = useState(1);
+  const [searchPage, setSearchPage] = useState(1)
 
   // Debounced search within category
   useEffect(() => {
     if (searchQuery.trim()) {
-      setIsSearching(true);
-      setSearchPage(1); // Reset to first page on new search
+      setIsSearching(true)
+      setSearchPage(1) // Reset to first page on new search
       const timer = setTimeout(() => {
         search({
           query: searchQuery,
           categories: [Number(id)],
           page: 1, // Always start from page 1 for new searches
-          perPage: 20,
-        });
-      }, 500);
-      return () => clearTimeout(timer);
+          perPage: 20
+        })
+      }, 500)
+      return () => clearTimeout(timer)
     } else {
-      setIsSearching(false);
-      clearSearch();
-      setSearchPage(1);
+      setIsSearching(false)
+      clearSearch()
+      setSearchPage(1)
     }
-  }, [searchQuery, id]);
+  }, [searchQuery, id])
 
   // Handle search pagination separately
   useEffect(() => {
@@ -71,43 +63,43 @@ const Categories = () => {
         query: searchQuery,
         categories: [Number(id)],
         page: searchPage,
-        perPage: 20,
-      });
+        perPage: 20
+      })
     }
-  }, [searchPage]);
+  }, [searchPage])
 
   // Handle search page changes
   const handleSearchPageChange = (newPage: number) => {
-    setSearchPage(newPage);
+    setSearchPage(newPage)
     if (searchQuery.trim()) {
       search({
         query: searchQuery,
         categories: [Number(id)],
         page: newPage,
-        perPage: 20,
-      });
+        perPage: 20
+      })
     }
-  };
+  }
 
   React.useEffect(() => {
     if (category) {
-      navigation.setOptions({ title: category.name });
+      navigation.setOptions({ title: category.name })
     }
-  }, [category]);
+  }, [category])
 
   const handleClearSearch = () => {
-    setSearchQuery("");
-    setIsSearching(false);
-    clearSearch();
-    setSearchPage(1);
-  };
+    setSearchQuery("")
+    setIsSearching(false)
+    clearSearch()
+    setSearchPage(1)
+  }
 
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
         <LoadingSpinner variant="lessons" count={5} />
       </SafeAreaView>
-    );
+    )
   }
 
   if (error || !category) {
@@ -117,7 +109,7 @@ const Categories = () => {
           Error: {error || "Category not found"}
         </Text>
       </SafeAreaView>
-    );
+    )
   }
 
   return (
@@ -172,9 +164,9 @@ const Categories = () => {
                         query: searchQuery,
                         categories: [Number(id)],
                         page: 1,
-                        perPage: 20,
-                      });
-                      setSearchPage(1);
+                        perPage: 20
+                      })
+                      setSearchPage(1)
                     }
                   }}
                 />
@@ -228,7 +220,7 @@ const Categories = () => {
                   </View>
                 ) : (
                   <View className="gap-y-3">
-                    {searchPosts.map((lesson) => (
+                    {searchPosts.map(lesson => (
                       <View key={lesson.id} className="mb-3">
                         <Link
                           asChild
@@ -240,17 +232,12 @@ const Categories = () => {
                               postContent: lesson.content?.rendered || "",
                               postAudioSrc:
                                 lesson.meta?.["the-audio-of-the-lesson"] || "",
-                              postDate: isValidDate(
-                                lesson.meta?.["date-of-the-lesson"],
-                              )
-                                ? formatPersianDate(
-                                    lesson.meta?.["date-of-the-lesson"],
-                                  )
-                                : "",
+                              postDate:
+                                lesson.meta?.["date-of-the-lesson"] || "",
                               categorayId: id,
                               categorayName: category?.name || "",
-                              searchQuery: searchQuery,
-                            },
+                              searchQuery: searchQuery
+                            }
                           }}
                         >
                           <Pressable className="p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/80 transition-colors shadow-sm">
@@ -267,13 +254,11 @@ const Categories = () => {
                                       </Text>
                                     </View>
                                   )}
-                                  {isValidDate(
-                                    lesson.meta?.["date-of-the-lesson"],
-                                  ) && (
+                                  {lesson.meta?.["date-of-the-lesson"] && (
                                     <View className="flex flex-row-reverse items-center">
                                       <Text className="text-sm text-gray-600 dark:text-gray-400 mr-1">
                                         {formatPersianDate(
-                                          lesson.meta?.["date-of-the-lesson"],
+                                          lesson.meta?.["date-of-the-lesson"]
                                         )}
                                       </Text>
                                     </View>
@@ -294,7 +279,7 @@ const Categories = () => {
                 <View className="gap-y-3">
                   {posts.map((lesson, index) => {
                     // Calculate the correct lesson number across pages
-                    const lessonNumber = (page - 1) * 20 + index + 1;
+                    const lessonNumber = (page - 1) * 20 + index + 1
 
                     return (
                       <Link
@@ -307,16 +292,10 @@ const Categories = () => {
                             postContent: lesson.content?.rendered || "",
                             postAudioSrc:
                               lesson.meta?.["the-audio-of-the-lesson"] || "",
-                            postDate: isValidDate(
-                              lesson.meta?.["date-of-the-lesson"],
-                            )
-                              ? formatPersianDate(
-                                  lesson.meta?.["date-of-the-lesson"],
-                                )
-                              : "",
+                            postDate: lesson.meta?.["date-of-the-lesson"] || "",
                             categorayId: id,
-                            categorayName: category?.name || "",
-                          },
+                            categorayName: category?.name || ""
+                          }
                         }}
                         key={lesson.id}
                         className="flex flex-row-reverse items-center p-3 rounded-lg bg-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
@@ -346,7 +325,7 @@ const Categories = () => {
                           )}
                         </Pressable>
                       </Link>
-                    );
+                    )
                   })}
                 </View>
               )}
@@ -369,7 +348,7 @@ const Categories = () => {
         )}
       </View>
     </SafeAreaView>
-  );
-};
+  )
+}
 
-export default Categories;
+export default Categories

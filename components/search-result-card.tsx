@@ -1,26 +1,26 @@
-import React from "react";
-import { View, Text, Pressable } from "react-native";
-import { Link } from "expo-router";
-import { Clock, Calendar } from "lucide-react-native";
-import { PostType } from "@/hooks/use-posts-by-category";
-import { useApi } from "@/context/api-context";
-import { formatPersianDate, isValidDate } from "@/utils/date-utils";
+import React from "react"
+import { View, Text, Pressable } from "react-native"
+import { Link } from "expo-router"
+import { Clock, Calendar } from "lucide-react-native"
+import { PostType } from "@/hooks/use-posts-by-category"
+import { useApi } from "@/context/api-context"
+import { formatPersianDate } from "@/utils/date-utils"
 
 interface SearchResultCardProps {
-  post: PostType;
-  searchQuery?: string;
+  post: PostType
+  searchQuery?: string
 }
 
 const SearchResultCard: React.FC<SearchResultCardProps> = ({
   post,
-  searchQuery,
+  searchQuery
 }) => {
-  const { categories } = useApi();
+  const { categories } = useApi()
 
   const highlightText = (text: string, query: string) => {
-    if (!query.trim()) return text;
+    if (!query.trim()) return text
 
-    const parts = text.split(new RegExp(`(${query})`, "gi"));
+    const parts = text.split(new RegExp(`(${query})`, "gi"))
     return parts.map((part, index) => (
       <Text
         key={index}
@@ -32,19 +32,17 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
       >
         {part}
       </Text>
-    ));
-  };
+    ))
+  }
 
   // Find the category name from the post's categories
   const postCategory =
     post.categories && post.categories.length > 0
-      ? categories.find((cat) => cat.id === post.categories[0])
-      : null;
+      ? categories.find(cat => cat.id === post.categories[0])
+      : null
 
   // Format the date properly
-  const formattedDate = isValidDate(post.meta?.["date-of-the-lesson"])
-    ? post.meta?.["date-of-the-lesson"]
-    : null;
+  const formattedDate = post.meta?.["date-of-the-lesson"] || null
 
   return (
     <Link
@@ -59,8 +57,8 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
           postDate: formattedDate || "",
           categorayId: postCategory?.id?.toString() || "",
           categorayName: postCategory?.name || "عمومی",
-          searchQuery: searchQuery || "",
-        },
+          searchQuery: searchQuery || ""
+        }
       }}
     >
       <Pressable className="p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/80 transition-colors shadow-sm">
@@ -131,7 +129,7 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
         </View>
       </Pressable>
     </Link>
-  );
-};
+  )
+}
 
-export default SearchResultCard;
+export default SearchResultCard

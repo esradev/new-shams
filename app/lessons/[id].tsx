@@ -1,34 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "expo-router";
-import { View, Text, ScrollView, Pressable } from "react-native";
-import {
-  ArrowLeft,
-  BookOpen,
-  Calendar,
-  ChevronLeft,
-  User,
-} from "lucide-react-native";
-import axios from "axios";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import RenderHTML from "react-native-render-html";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import React from "react"
+import { Link } from "expo-router"
+import { View, Text, ScrollView } from "react-native"
+import { BookOpen, Calendar, User } from "lucide-react-native"
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
+import RenderHTML from "react-native-render-html"
+import { useLocalSearchParams } from "expo-router"
 
-import AudioPlayer from "@/components/audio-player";
-import LessonActions from "@/components/lesson-actions";
-import { useColorScheme } from "nativewind";
-import { formatPersianDate, isValidDate } from "@/utils/date-utils";
-import { createHighlightedHTML } from "@/utils/text-highlight";
-
-interface ErrorType {
-  message: string;
-}
-
-interface PostType {
-  title: { rendered: string };
-  content: { rendered: string };
-  meta: { "the-audio-of-the-lesson": string; "date-of-the-lesson": string };
-  courseName?: string;
-}
+import AudioPlayer from "@/components/audio-player"
+import LessonActions from "@/components/lesson-actions"
+import { useColorScheme } from "nativewind"
+import { createHighlightedHTML } from "@/utils/text-highlight"
 
 export default function LessonPage() {
   const {
@@ -39,16 +20,24 @@ export default function LessonPage() {
     postContent,
     postAudioSrc,
     postDate,
-    searchQuery,
-  } = useLocalSearchParams();
+    searchQuery
+  } = useLocalSearchParams()
 
-  const { colorScheme } = useColorScheme();
+  const { colorScheme } = useColorScheme()
+
+  console.log("Lesson Page Params:", {
+    id,
+    categorayId,
+    categorayName,
+    postTitle,
+    postContent,
+    postAudioSrc,
+    postDate,
+    searchQuery
+  })
 
   // Format the date properly
-  const formattedDate =
-    typeof postDate === "string" && isValidDate(postDate)
-      ? formatPersianDate(postDate)
-      : postDate;
+  const formattedDate = typeof postDate === "string" ? postDate : postDate
 
   // Prepare content with search highlighting
   const processedContent = () => {
@@ -58,24 +47,20 @@ export default function LessonPage() {
         <p style="color: #78716c; font-style: italic;">
           متأسفانه محتوای این جلسه در حال حاضر در دسترس نیست. لطفا بعدا دوباره مراجعه کنید.
         </p>
-      </div>`;
+      </div>`
 
     if (searchQuery && typeof searchQuery === "string" && searchQuery.trim()) {
-      return createHighlightedHTML(
-        content,
-        searchQuery,
-        colorScheme === "dark",
-      );
+      return createHighlightedHTML(content, searchQuery, colorScheme === "dark")
     }
 
-    return content;
-  };
+    return content
+  }
 
   // Function to highlight text in title
   const highlightTitle = (title: string, query: string) => {
-    if (!query || !query.trim()) return title;
+    if (!query || !query.trim()) return title
 
-    const parts = title.split(new RegExp(`(${query})`, "gi"));
+    const parts = title.split(new RegExp(`(${query})`, "gi"))
     return parts.map((part, index) => (
       <Text
         key={index}
@@ -87,8 +72,8 @@ export default function LessonPage() {
       >
         {part}
       </Text>
-    ));
-  };
+    ))
+  }
 
   return (
     <SafeAreaProvider>
@@ -122,7 +107,7 @@ export default function LessonPage() {
           className="flex-1"
           contentContainerStyle={{
             paddingBottom: postAudioSrc ? 160 : 40,
-            paddingHorizontal: 16,
+            paddingHorizontal: 16
           }}
         >
           {/* Lesson Header Card */}
@@ -199,7 +184,7 @@ export default function LessonPage() {
 
               <RenderHTML
                 source={{
-                  html: processedContent(),
+                  html: processedContent()
                 }}
                 contentWidth={350}
                 baseStyle={{
@@ -208,54 +193,54 @@ export default function LessonPage() {
                   lineHeight: 32,
                   color: colorScheme === "dark" ? "#e7e5e4" : "#44403c",
                   textAlign: "right",
-                  fontFamily: "System",
+                  fontFamily: "System"
                 }}
                 tagsStyles={{
                   p: {
                     marginBottom: 20,
-                    textAlign: "right",
+                    textAlign: "right"
                   },
                   h1: {
                     fontSize: 28,
                     fontWeight: "bold",
                     marginBottom: 20,
                     textAlign: "right",
-                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917",
+                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
                   },
                   h2: {
                     fontSize: 24,
                     fontWeight: "600",
                     marginBottom: 16,
                     textAlign: "right",
-                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917",
+                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
                   },
                   h3: {
                     fontSize: 20,
                     fontWeight: "600",
                     marginBottom: 12,
                     textAlign: "right",
-                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917",
+                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
                   },
                   ul: {
                     paddingLeft: 0,
                     paddingRight: 20,
-                    textAlign: "right",
+                    textAlign: "right"
                   },
                   ol: {
                     paddingLeft: 0,
                     paddingRight: 20,
-                    textAlign: "right",
+                    textAlign: "right"
                   },
                   li: {
                     marginBottom: 12,
-                    textAlign: "right",
+                    textAlign: "right"
                   },
                   strong: {
                     fontWeight: "bold",
-                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917",
+                    color: colorScheme === "dark" ? "#f5f5f4" : "#1c1917"
                   },
                   em: {
-                    fontStyle: "italic",
+                    fontStyle: "italic"
                   },
                   blockquote: {
                     borderRightWidth: 4,
@@ -266,7 +251,7 @@ export default function LessonPage() {
                     backgroundColor:
                       colorScheme === "dark" ? "#292524" : "#f7f7f6",
                     paddingVertical: 16,
-                    textAlign: "right",
+                    textAlign: "right"
                   },
                   mark: {
                     backgroundColor:
@@ -274,8 +259,8 @@ export default function LessonPage() {
                     color: colorScheme === "dark" ? "#fbbf24" : "#92400e",
                     padding: 4,
                     borderRadius: 4,
-                    fontWeight: "600",
-                  },
+                    fontWeight: "600"
+                  }
                 }}
               />
             </View>
@@ -316,5 +301,5 @@ export default function LessonPage() {
         )}
       </SafeAreaView>
     </SafeAreaProvider>
-  );
+  )
 }

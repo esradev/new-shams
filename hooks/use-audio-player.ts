@@ -81,12 +81,6 @@ export function useAudioPlayerHook(
   // Check if FileSystem is available
   const isFileSystemAvailable = useCallback(() => {
     try {
-      if (__DEV__) {
-        console.log("Checking FileSystem availability...")
-        console.log("Platform.OS:", Platform.OS)
-        console.log("Paths object exists:", !!Paths)
-      }
-
       // Check if we're on a supported platform
       if (Platform.OS === "web") {
         return false
@@ -105,16 +99,8 @@ export function useAudioPlayerHook(
           (typeof cacheDir === "object" && cacheDir.uri))
       )
 
-      if (__DEV__) {
-        console.log("Cache directory:", Paths.cache)
-        console.log("FileSystem available:", isAvailable)
-      }
-
       return isAvailable
     } catch (error) {
-      if (__DEV__) {
-        console.log("FileSystem check error:", error)
-      }
       return false
     }
   }, [])
@@ -132,9 +118,7 @@ export function useAudioPlayerHook(
           setFileUri(audioFile.uri)
         }
       } catch (error) {
-        if (__DEV__) {
-          console.log("Error checking file exists:", error)
-        }
+        console.error("Error checking local audio file:", error)
       }
     }
     checkFileExists()
@@ -270,11 +254,6 @@ export function useAudioPlayerHook(
         existingFile.delete()
       }
 
-      if (__DEV__) {
-        console.log("Starting download from:", postAudioSrc)
-        console.log("Saving to cache directory:", cacheDirectory)
-      }
-
       // Start simulated progress updates
       progressInterval = setInterval(() => {
         setDownloadProgress(prev => {
@@ -299,17 +278,9 @@ export function useAudioPlayerHook(
       }
       setDownloadProgress(100)
 
-      if (__DEV__) {
-        console.log("Download completed:", downloadedFile.uri)
-      }
-
       if (downloadedFile.exists) {
         // Get file size
         const fileSize = downloadedFile.size || 0
-
-        if (__DEV__) {
-          console.log("Downloaded file size:", fileSize)
-        }
 
         // Add to local storage
         await addToDownloads({
@@ -342,8 +313,6 @@ export function useAudioPlayerHook(
       if (progressInterval !== null) {
         clearInterval(progressInterval)
       }
-
-      console.error("Download error:", error)
 
       if (error instanceof Error && error.message.includes("Cache directory")) {
         Alert.alert(
@@ -406,7 +375,6 @@ export function useAudioPlayerHook(
       })
       setShowSuccessModal(true)
     } catch (error) {
-      console.error("Error deleting download:", error)
       Alert.alert("خطا", "خطا در حذف فایل")
       setShowDeleteDialog(false)
     }
@@ -421,19 +389,15 @@ export function useAudioPlayerHook(
   // Test function for development
   const testFileSystem = useCallback(async () => {
     if (__DEV__) {
-      console.log("Testing FileSystem capabilities...")
       try {
         const available = isFileSystemAvailable()
-        console.log("FileSystem available:", available)
 
         if (available) {
           const testFile = new File(Paths.cache, "test.txt")
           testFile.write("test")
           const exists = testFile.exists
-          console.log("Test file created:", exists)
           if (exists) {
             testFile.delete()
-            console.log("Test file cleaned up")
           }
         }
       } catch (error) {
