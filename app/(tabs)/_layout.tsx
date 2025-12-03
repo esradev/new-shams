@@ -1,36 +1,43 @@
-import React from 'react'
-import { Tabs } from 'expo-router'
-import TabBar from '@/components/TabBar'
-import Header from '@/components/header'
+import React from "react"
+import { Tabs } from "expo-router"
+import TabBar from "@/components/TabBar"
+import Header from "@/components/header"
 
 const _layout = () => {
   return (
     <Tabs tabBar={props => <TabBar {...props} />}>
       <Tabs.Screen
-        name='index'
+        name="index"
         options={{
-          title: 'خانه',
+          title: "خانه",
           header: () => <Header />
         }}
       />
       <Tabs.Screen
-        name='courses'
+        name="courses"
         options={{
-          title: 'دروس',
+          title: "دروس",
           header: () => <Header />
         }}
       />
       <Tabs.Screen
-        name='search'
+        name="search"
         options={{
-          title: 'جستجو',
+          title: "جستجو",
           header: () => <Header />
         }}
       />
       <Tabs.Screen
-        name='settings'
+        name="my-progress"
         options={{
-          title: 'تنظیمات',
+          title: "پیشرفت من",
+          header: () => <Header />
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "تنظیمات",
           header: () => <Header />
         }}
       />

@@ -1,18 +1,19 @@
-import { Pressable, StyleSheet } from 'react-native'
-import React, { useEffect } from 'react'
+import { Pressable, StyleSheet } from "react-native"
+import React, { useEffect } from "react"
 import Animated, {
   interpolate,
   useAnimatedStyle,
   useSharedValue,
   withSpring
-} from 'react-native-reanimated'
+} from "react-native-reanimated"
 
-import { Book, Home, Search, Settings } from 'lucide-react-native'
+import { Book, Home, Search, Settings, BookCheck } from "lucide-react-native"
 
 const icons: { [key: string]: React.ComponentType<any> } = {
   index: props => <Home size={22} {...props} />,
   courses: props => <Book size={22} {...props} />,
   search: props => <Search size={22} {...props} />,
+  "my-progress": props => <BookCheck size={22} {...props} />,
   settings: props => <Settings size={22} {...props} />
 }
 
@@ -30,7 +31,7 @@ const TabBarButton = (props: TabBarButtonProps) => {
 
   useEffect(() => {
     scale.value = withSpring(
-      typeof isFocused === 'boolean' ? (isFocused ? 1 : 0) : isFocused,
+      typeof isFocused === "boolean" ? (isFocused ? 1 : 0) : isFocused,
       { duration: 350 }
     )
   }, [scale, isFocused])
@@ -56,7 +57,8 @@ const TabBarButton = (props: TabBarButtonProps) => {
   return (
     <Pressable
       {...props}
-      className='flex flex-1 justify-center align-middle items-center gap-x-4'>
+      className="flex flex-1 justify-center align-middle items-center gap-x-4"
+    >
       <Animated.View style={[animatedIconStyle]}>
         {React.createElement(icons[routeName], { color })}
       </Animated.View>
@@ -68,7 +70,8 @@ const TabBarButton = (props: TabBarButtonProps) => {
             fontSize: 12
           },
           animatedTextStyle
-        ]}>
+        ]}
+      >
         {label}
       </Animated.Text>
     </Pressable>
