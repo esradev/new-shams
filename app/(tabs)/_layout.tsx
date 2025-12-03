@@ -9,13 +9,6 @@ const _layout = () => {
       <Tabs.Screen
         name="index"
         options={{
-          title: "خانه",
-          header: () => <Header />
-        }}
-      />
-      <Tabs.Screen
-        name="courses"
-        options={{
           title: "دروس",
           header: () => <Header />
         }}
@@ -30,7 +23,7 @@ const _layout = () => {
       <Tabs.Screen
         name="my-progress"
         options={{
-          title: "پیشرفت من",
+          title: "ادامه مطالعه",
           header: () => <Header />
         }}
       />

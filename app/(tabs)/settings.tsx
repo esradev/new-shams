@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import {
   View,
   Text,
@@ -20,17 +20,11 @@ import {
   CheckCircle,
   Calendar,
   BarChart3,
-  Settings as SettingsIcon,
-  Moon,
-  Sun,
-  Info,
   HardDrive,
-  Clock,
-  Database,
   ChevronRight,
   Menu,
   Play,
-  FolderOpen
+  ChevronLeft
 } from "lucide-react-native"
 
 import {
@@ -64,18 +58,14 @@ export default function Settings() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   const {
-    completedLessons,
-    favoriteLessons,
     downloadedLessons,
-    userActivities,
     loading,
     getStatistics,
     removeFromDownloads,
-    clearAllData,
     loadAllData
   } = useLocalStorage()
 
-  const { getCacheStats, clearCache } = useCache()
+  const { getCacheStats } = useCache()
 
   const stats = getStatistics()
 
@@ -89,15 +79,6 @@ export default function Settings() {
       setRefreshing(false)
     }
   }
-
-  // Load cache stats on mount and section change
-  useEffect(() => {
-    const loadCacheStats = async () => {
-      const stats = await getCacheStats()
-      setCacheStats(stats)
-    }
-    loadCacheStats()
-  }, [activeSection])
 
   // Check if FileSystem is available
   const isFileSystemAvailable = () => {
@@ -144,28 +125,6 @@ export default function Settings() {
               await removeFromDownloads(lessonId)
             } catch (error) {
               Alert.alert("خطا", "مشکلی در حذف فایل پیش آمد")
-            }
-          }
-        }
-      ]
-    )
-  }
-
-  const handleClearAllData = () => {
-    Alert.alert(
-      "حذف تمام اطلاعات",
-      "آیا می‌خواهید تمام اطلاعات (تکمیل شده‌ها، علاقه‌مندی‌ها، دانلودها و فعالیت‌ها) را حذف کنید؟ این عمل غیرقابل بازگشت است.",
-      [
-        { text: "انصراف", style: "cancel" },
-        {
-          text: "حذف همه",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await clearAllData()
-              Alert.alert("موفق", "تمام اطلاعات حذف شد")
-            } catch (error) {
-              Alert.alert("خطا", "مشکلی در حذف اطلاعات پیش آمد")
             }
           }
         }
@@ -291,28 +250,10 @@ export default function Settings() {
       description: "آمار و اطلاعات کلی"
     },
     {
-      id: "activities",
-      title: "فعالیت‌ها",
-      icon: "Activity",
-      description: "تاریخچه فعالیت‌های شما"
-    },
-    {
       id: "downloads",
       title: "دانلودها",
       icon: "Download",
       description: "فایل‌های دانلود شده"
-    },
-    {
-      id: "cache",
-      title: "کش",
-      icon: "Database",
-      description: "مدیریت حافظه کش"
-    },
-    {
-      id: "preferences",
-      title: "تنظیمات",
-      icon: "SettingsIcon",
-      description: "تنظیمات عمومی برنامه"
     }
   ]
 
@@ -344,26 +285,8 @@ export default function Settings() {
                 color={activeSection === item.id ? "#fff" : "#6B7280"}
               />
             )}
-            {item.id === "activities" && (
-              <Activity
-                size={18}
-                color={activeSection === item.id ? "#fff" : "#6B7280"}
-              />
-            )}
             {item.id === "downloads" && (
               <Download
-                size={18}
-                color={activeSection === item.id ? "#fff" : "#6B7280"}
-              />
-            )}
-            {item.id === "cache" && (
-              <Database
-                size={18}
-                color={activeSection === item.id ? "#fff" : "#6B7280"}
-              />
-            )}
-            {item.id === "preferences" && (
-              <SettingsIcon
                 size={18}
                 color={activeSection === item.id ? "#fff" : "#6B7280"}
               />
@@ -386,7 +309,7 @@ export default function Settings() {
         </View>
         {activeSection === item.id && (
           <View className="bg-emerald-500 rounded-full p-1">
-            <ChevronRight size={12} color="#fff" />
+            <ChevronLeft size={12} color="#fff" />
           </View>
         )}
       </View>
@@ -535,201 +458,6 @@ export default function Settings() {
     </ScrollView>
   )
 
-  const renderCache = () => (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      contentContainerStyle={{ paddingBottom: 32 }}
-    >
-      <View className="px-4 py-6">
-        <Text className="text-2xl font-bold text-gray-900 dark:text-white text-right dir-rtl mb-6">
-          کش داده‌ها
-        </Text>
-
-        {/* Cache Statistics */}
-        <View className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-6">
-          <View className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <View className="flex flex-row-reverse items-center">
-              <Database size={20} color="#6B7280" />
-              <Text className="text-lg font-semibold text-gray-900 dark:text-white mr-3">
-                آمار کش
-              </Text>
-            </View>
-          </View>
-          <View className="p-4 space-y-4">
-            <View className="flex flex-row-reverse items-center justify-between">
-              <Text className="text-gray-900 dark:text-white font-medium">
-                تعداد ورودی‌ها
-              </Text>
-              <Text className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                {cacheStats?.totalEntries || 0}
-              </Text>
-            </View>
-            <View className="flex flex-row-reverse items-center justify-between">
-              <Text className="text-gray-900 dark:text-white font-medium">
-                حجم کل
-              </Text>
-              <Text className="text-blue-600 dark:text-blue-400 font-semibold">
-                {formatBytes(cacheStats?.totalSize || 0)}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Cache Entries */}
-        <View className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-6">
-          <View className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <View className="flex flex-row-reverse items-center justify-between">
-              <View className="flex flex-row-reverse items-center">
-                <Clock size={20} color="#6B7280" />
-                <Text className="text-lg font-semibold text-gray-900 dark:text-white mr-3">
-                  ورودی‌های کش
-                </Text>
-              </View>
-              <Text className="text-sm text-gray-500 dark:text-gray-400">
-                {cacheStats?.entries.length || 0} مورد
-              </Text>
-            </View>
-          </View>
-          <View className="max-h-96">
-            <ScrollView>
-              {cacheStats?.entries && cacheStats.entries.length > 0 ? (
-                cacheStats.entries.slice(0, 20).map((entry, index) => (
-                  <View
-                    key={index}
-                    className="p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                  >
-                    <Text className="text-gray-900 dark:text-white font-medium text-right dir-rtl mb-1">
-                      {entry.url.split("/").pop() || "داده‌های API"}
-                    </Text>
-                    <View className="flex flex-row-reverse items-center justify-between">
-                      <Text className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatBytes(entry.size)}
-                      </Text>
-                      <Text className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatActivityTime(entry.timestamp)}
-                      </Text>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <View className="p-6 text-center">
-                  <Text className="text-gray-500 dark:text-gray-400 text-center">
-                    هیچ داده‌ای در کش وجود ندارد
-                  </Text>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </View>
-
-        {/* Cache Actions */}
-        <View className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-          <View className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <View className="flex flex-row-reverse items-center">
-              <Trash2 size={20} color="#6B7280" />
-              <Text className="text-lg font-semibold text-gray-900 dark:text-white mr-3">
-                مدیریت کش
-              </Text>
-            </View>
-          </View>
-          <View className="p-4">
-            <Pressable
-              onPress={() => {
-                Alert.alert(
-                  "پاک کردن کش",
-                  "آیا می‌خواهید تمام داده‌های کش شده را پاک کنید؟ این کار باعث بارگذاری مجدد داده‌ها از سرور می‌شود.",
-                  [
-                    { text: "انصراف", style: "cancel" },
-                    {
-                      text: "پاک کردن",
-                      style: "destructive",
-                      onPress: async () => {
-                        try {
-                          await clearCache()
-                          const newStats = await getCacheStats()
-                          setCacheStats(newStats)
-                          Alert.alert("موفق", "کش پاک شد")
-                        } catch (error) {
-                          Alert.alert("خطا", "مشکلی در پاک کردن کش پیش آمد")
-                        }
-                      }
-                    }
-                  ]
-                )
-              }}
-              className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-4 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/30 active:scale-98"
-            >
-              <View className="flex flex-row-reverse items-center justify-center">
-                <Trash2 size={20} color="#F97316" />
-                <Text className="text-orange-600 dark:text-orange-400 font-medium mr-3">
-                  پاک کردن کش
-                </Text>
-              </View>
-              <Text className="text-sm text-orange-500 dark:text-orange-400 text-center mt-2">
-                داده‌های کش شده از حافظه حذف می‌شوند
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </ScrollView>
-  )
-
-  const renderActivities = () => (
-    <FlatList
-      data={userActivities}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      keyExtractor={item => item.id}
-      contentContainerStyle={{ padding: 16 }}
-      showsVerticalScrollIndicator={false}
-      ListHeaderComponent={
-        <Text className="text-2xl font-bold text-gray-900 dark:text-white text-right dir-rtl mb-6">
-          تمام فعالیت‌ها
-        </Text>
-      }
-      ListEmptyComponent={
-        <View className="bg-gray-50 dark:bg-gray-800/50 p-8 rounded-xl items-center">
-          <Activity size={48} color="#9CA3AF" />
-          <Text className="text-gray-500 dark:text-gray-400 text-center mt-4 text-lg">
-            هیچ فعالیتی ثبت نشده است
-          </Text>
-        </View>
-      }
-      renderItem={({ item: activity }) => (
-        <View className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-3">
-          <View className="flex flex-row-reverse items-start">
-            {getActivityIcon(activity.type)}
-            <View className="flex-1 mr-3">
-              <Text className="text-gray-900 dark:text-white font-medium text-right dir-rtl mb-1">
-                {activity.lessonTitle}
-              </Text>
-              <Text className="text-sm text-emerald-600 dark:text-emerald-400 text-right dir-rtl">
-                {activity.categoryName}
-              </Text>
-              <View className="flex flex-row-reverse items-center mt-2">
-                <Clock size={12} color="#6B7280" />
-                <Text className="text-xs text-gray-500 dark:text-gray-400 text-right dir-rtl mr-1">
-                  {formatActivityTime(activity.timestamp)}
-                </Text>
-                <Text className="text-xs text-gray-400 dark:text-gray-500 mx-2">
-                  •
-                </Text>
-                <Text className="text-xs text-gray-500 dark:text-gray-400 text-right dir-rtl">
-                  {getActivityText(activity.type)}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
-    />
-  )
-
   const renderDownloads = () => (
     <FlatList
       data={downloadedLessons}
@@ -851,76 +579,6 @@ export default function Settings() {
     />
   )
 
-  const renderPreferences = () => (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      contentContainerStyle={{ paddingBottom: 32 }}
-    >
-      <View className="px-4 py-6">
-        <Text className="text-2xl font-bold text-gray-900 dark:text-white text-right dir-rtl mb-6">
-          تنظیمات
-        </Text>
-
-        {/* App Info */}
-        <View className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-4">
-          <View className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <View className="flex flex-row-reverse items-center">
-              <Info size={20} color="#6B7280" />
-              <Text className="text-lg font-semibold text-gray-900 dark:text-white mr-3">
-                اطلاعات برنامه
-              </Text>
-            </View>
-          </View>
-          <View className="p-4 space-y-3">
-            <View className="flex flex-row-reverse items-center justify-between">
-              <Text className="text-gray-900 dark:text-white">نسخه برنامه</Text>
-              <Text className="text-gray-500 dark:text-gray-400">1.0.0</Text>
-            </View>
-            <View className="flex flex-row-reverse items-center justify-between">
-              <Text className="text-gray-900 dark:text-white">
-                تعداد کل دروس
-              </Text>
-              <Text className="text-gray-500 dark:text-gray-400">
-                {stats.totalCompleted + stats.totalFavorites}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Data Management */}
-        <View className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-          <View className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <View className="flex flex-row-reverse items-center">
-              <HardDrive size={20} color="#6B7280" />
-              <Text className="text-lg font-semibold text-gray-900 dark:text-white mr-3">
-                مدیریت داده‌ها
-              </Text>
-            </View>
-          </View>
-          <View className="p-4">
-            <Pressable
-              onPress={handleClearAllData}
-              className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 active:scale-98"
-            >
-              <View className="flex flex-row-reverse items-center justify-center">
-                <Trash2 size={20} color="#EF4444" />
-                <Text className="text-red-600 dark:text-red-400 font-medium mr-3">
-                  حذف تمام داده‌ها
-                </Text>
-              </View>
-              <Text className="text-sm text-red-500 dark:text-red-400 text-center mt-2">
-                شامل تکمیل شده‌ها، علاقه‌مندی‌ها و دانلودها
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </ScrollView>
-  )
-
   if (loading) {
     return (
       <SafeAreaProvider>
@@ -960,10 +618,7 @@ export default function Settings() {
             {/* Content Area */}
             <View className="flex-1">
               {activeSection === "overview" && renderOverview()}
-              {activeSection === "activities" && renderActivities()}
               {activeSection === "downloads" && renderDownloads()}
-              {activeSection === "cache" && renderCache()}
-              {activeSection === "preferences" && renderPreferences()}
             </View>
           </View>
         </View>

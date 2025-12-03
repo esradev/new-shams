@@ -7,6 +7,7 @@ import CategoryList from "@/components/category-list"
 import CourseCard from "@/components/course-card"
 import LoadingSpinner from "@/components/loading-spinner"
 import { useApi } from "@/context/api-context"
+import GlobalError from "@/components/global-error"
 
 export default function HomePage() {
   const { colorScheme } = useColorScheme()
@@ -16,9 +17,7 @@ export default function HomePage() {
     <SafeAreaProvider>
       <SafeAreaView className="flex flex-1 bg-white dark:bg-gray-900">
         {error ? (
-          <Text className="text-red-500 text-lg font-bold text-center mb-4 w-full">
-            Error: {error?.message}
-          </Text>
+          <GlobalError type="network" message={error?.message} />
         ) : loading ? (
           <LoadingSpinner />
         ) : (

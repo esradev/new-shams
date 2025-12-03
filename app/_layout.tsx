@@ -8,7 +8,6 @@ import { ApiProvider } from "@/context/api-context"
 import { CacheProvider } from "@/context/cache-context"
 import Header from "@/components/header"
 import "./global.css"
-import { TextAlignEnd } from "lucide-react-native"
 
 export default function RootLayout() {
   return (

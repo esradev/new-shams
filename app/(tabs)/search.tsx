@@ -2,15 +2,12 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  ScrollView,
   TextInput,
   Pressable,
   FlatList,
-  Alert,
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { Search as SearchIcon, X, Filter, FilterX } from "lucide-react-native";
-import { Link } from "expo-router";
 
 import { useSearch } from "@/hooks/use-search";
 import { useApi } from "@/context/api-context";
