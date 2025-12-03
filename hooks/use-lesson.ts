@@ -132,22 +132,31 @@ export const preloadLessons = async (lessonIds: number[]): Promise<void> => {
 }
 
 // Clear lesson cache
-export const clearLessonCache = (): void => {
-  const cacheKeys = offlineCache
-    .getAllCachedItems()
-    .map(item => item.key)
-    .filter(key => key.startsWith("lesson_"))
+export const clearLessonCache = async (): Promise<void> => {
+  try {
+    const [offlineCacheItems, apiCacheItems] = await Promise.all([
+      offlineCache.getAllCachedItems(),
+      apiCache.getAllCachedItems()
+    ])
 
-  cacheKeys.forEach(key => {
-    offlineCache.delete(key)
-  })
+    const offlineCacheKeys = offlineCacheItems
+      .map((item: { key: string; item: any }) => item.key)
+      .filter((key: string) => key.startsWith("lesson_"))
 
-  const apiCacheKeys = apiCache
-    .getAllCachedItems()
-    .map(item => item.key)
-    .filter(key => key.startsWith("lesson_api_"))
+    const offlineDeletePromises = offlineCacheKeys.map((key: string) =>
+      offlineCache.delete(key)
+    )
 
-  apiCacheKeys.forEach(key => {
-    apiCache.delete(key)
-  })
+    const apiCacheKeys = apiCacheItems
+      .map((item: { key: string; item: any }) => item.key)
+      .filter((key: string) => key.startsWith("lesson_api_"))
+
+    const apiDeletePromises = apiCacheKeys.map((key: string) =>
+      apiCache.delete(key)
+    )
+
+    await Promise.all([...offlineDeletePromises, ...apiDeletePromises])
+  } catch (error) {
+    console.error("Error clearing lesson cache:", error)
+  }
 }

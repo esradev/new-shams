@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
 import axios from "axios"
-import { apiCache } from "@/utils/storage"
+import storage, { apiCache, cacheHealthMonitor } from "@/utils/storage"
 
 interface CacheItem {
   data: any
@@ -38,6 +38,45 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
     totalSize: 0,
     entries: []
   })
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  // Initialize cache system on mount
+  useEffect(() => {
+    const initializeCache = async () => {
+      try {
+        console.log("Initializing cache system...")
+        await storage.initializeCacheSystem()
+        setIsInitialized(true)
+
+        // Update stats after initialization
+        await getCacheStats()
+      } catch (error) {
+        console.error("Cache initialization failed:", error)
+        setIsInitialized(true) // Still allow app to function
+      }
+    }
+
+    initializeCache()
+  }, [])
+
+  // Monitor cache health periodically
+  useEffect(() => {
+    if (!isInitialized) return
+
+    const monitorHealth = async () => {
+      const health = await cacheHealthMonitor.checkCacheHealth()
+
+      if (!health.apiCache.healthy) {
+        console.warn("API cache unhealthy, performing maintenance...")
+        await cacheHealthMonitor.performMaintenance()
+      }
+    }
+
+    // Check health every 10 minutes
+    const healthInterval = setInterval(monitorHealth, 10 * 60 * 1000)
+
+    return () => clearInterval(healthInterval)
+  }, [isInitialized])
 
   // Get cached data
   const getCachedData = async (
@@ -55,11 +94,26 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Set cached data
   const setCachedData = async (url: string, data: any): Promise<void> => {
+    const cacheKey = encodeURIComponent(url)
+
     try {
-      const cacheKey = encodeURIComponent(url)
       await apiCache.set(cacheKey, data, DEFAULT_MAX_AGE)
     } catch (error) {
       console.error("Error setting cached data:", error)
+
+      // If storage is full, try emergency cleanup and retry once
+      if (error instanceof Error && error.message?.includes("SQLITE_FULL")) {
+        console.warn("Storage full, attempting emergency cleanup...")
+        try {
+          await cacheHealthMonitor.emergencyCleanup()
+          await apiCache.set(cacheKey, data, DEFAULT_MAX_AGE)
+        } catch (retryError) {
+          console.error(
+            "Cache set failed even after emergency cleanup:",
+            retryError
+          )
+        }
+      }
     }
   }
 
@@ -80,8 +134,20 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
   // Get cache statistics
   const getCacheStats = async (): Promise<CacheStats> => {
     try {
-      const stats = apiCache.getStats()
-      const cacheEntries = apiCache.getAllCachedItems()
+      const stats = await apiCache.getCacheStats() // Use async version
+      const cacheEntries = await apiCache.getAllCachedItems() // Use async version
+
+      // Add safety check for cacheEntries
+      if (!cacheEntries || !Array.isArray(cacheEntries)) {
+        console.warn("Cache entries is not an array, returning empty stats")
+        const emptyCacheStats: CacheStats = {
+          totalEntries: stats.totalItems || 0,
+          totalSize: stats.totalSize || 0,
+          entries: []
+        }
+        setCacheStats(emptyCacheStats)
+        return emptyCacheStats
+      }
 
       const entries: CacheItem[] = cacheEntries.map(({ key, item }) => ({
         data: item.data,
@@ -140,8 +206,10 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Update cache stats on mount
   useEffect(() => {
-    getCacheStats()
-  }, [])
+    if (isInitialized) {
+      getCacheStats()
+    }
+  }, [isInitialized])
 
   const contextValue: CacheContextType = {
     getCachedData,
