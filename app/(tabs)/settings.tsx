@@ -34,7 +34,7 @@ import {
 } from "@/hooks/use-local-storage"
 import { useCache, CacheStats } from "@/context/cache-context"
 import { formatPersianDate } from "@/utils/date-utils"
-import LoadingSpinner from "@/components/loading-spinner"
+import GlobalLoading from "@/components/global-loading"
 
 type SettingsSection =
   | "overview"
@@ -583,7 +583,7 @@ export default function Settings() {
     return (
       <SafeAreaProvider>
         <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
-          <LoadingSpinner />
+          <GlobalLoading message="در حال بارگذاری تنظیمات..." />
         </SafeAreaView>
       </SafeAreaProvider>
     )

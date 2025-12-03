@@ -1,5 +1,5 @@
 import { Href, Link } from "expo-router";
-import { View, Text, Pressable } from "react-native";
+import { Text, Pressable } from "react-native";
 
 interface Category {
   id: number;

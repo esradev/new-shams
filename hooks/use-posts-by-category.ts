@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
-import { useCache } from "@/context/cache-context"
-import { offlineCache } from "@/utils/storage"
-import { preloadLessons } from "@/hooks/use-lesson"
 
 export interface PostType {
   id: number
@@ -17,17 +14,12 @@ export interface PostType {
   completed?: boolean
 }
 
-const POSTS_STORAGE_PREFIX = "offline_posts_"
-const POSTS_TIMESTAMP_PREFIX = "offline_posts_timestamp_"
-const OFFLINE_MAX_AGE = 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
-
 export const usePostsByCategory = (categoryId: string | string[]) => {
   const [posts, setPosts] = useState<PostType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const { fetchWithCache } = useCache()
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -37,115 +29,23 @@ export const usePostsByCategory = (categoryId: string | string[]) => {
       setError(null)
 
       try {
-        const storageKey = `${categoryId}_${page}`
-
-        // First, try to load from offline storage
-        const offlinePosts = await loadOfflinePosts(storageKey)
-        if (offlinePosts) {
-          setPosts(offlinePosts.posts)
-          setTotalPages(offlinePosts.totalPages)
-          setLoading(false)
-
-          // Check if offline data is stale
-          const timestamp = await offlineCache.get<number>(
-            `${POSTS_TIMESTAMP_PREFIX}${storageKey}`
-          )
-          const isStale = !timestamp || Date.now() - timestamp > OFFLINE_MAX_AGE
-
-          if (!isStale) {
-            return // Use offline data without fetching
-          }
-        }
-
         const url = `https://shams-almaarif.com/wp-json/wp/v2/posts?categories=${categoryId}&page=${page}&per_page=20&orderby=date&order=asc`
 
-        // For the actual API call, we need to use axios to get headers
         const response = await axios.get(url)
-
-        // Cache the response data
-        await fetchWithCache(url, { maxAge: 10 * 60 * 1000 }) // 10 minutes cache
-
-        const postsData = {
-          posts: response.data,
-          totalPages: Number(response.headers["x-wp-totalpages"]) || 1
-        }
-
-        // Save to offline storage
-        await saveOfflinePosts(storageKey, postsData)
-
         setPosts(response.data)
         setTotalPages(Number(response.headers["x-wp-totalpages"]) || 1)
 
-        // Preload lessons in background
-        const lessonIds = response.data.map((post: any) => post.id)
-        preloadLessons(lessonIds)
       } catch (err: any) {
-        // If network fails and we have offline data, use it
-        const storageKey = `${categoryId}_${page}`
-        const offlinePosts = await loadOfflinePosts(storageKey)
-
-        if (offlinePosts) {
-          setPosts(offlinePosts.posts)
-          setTotalPages(offlinePosts.totalPages)
-          setError(null)
-        } else {
-          setError(err.message)
-          // Try to get cached data as fallback
-          try {
-            const cachedData = await fetchWithCache(
-              `https://shams-almaarif.com/wp-json/wp/v2/posts?categories=${categoryId}&page=${page}&per_page=20&orderby=date&order=asc`,
-              { maxAge: Number.MAX_SAFE_INTEGER }
-            )
-            if (cachedData) {
-              setPosts(cachedData)
-              setError(null)
-            }
-          } catch (cacheErr) {
-            console.error("No cached data available")
-          }
-        }
+          console.error("Error fetching posts by category:", err)
+          setError(err.message || "Failed to load posts")
+          setPosts([])
       } finally {
         setLoading(false)
       }
     }
 
     fetchPosts()
-  }, [categoryId, page, fetchWithCache])
-
-  const loadOfflinePosts = async (
-    storageKey: string
-  ): Promise<{ posts: PostType[]; totalPages: number } | null> => {
-    try {
-      const postsData = await offlineCache.get<{
-        posts: PostType[]
-        totalPages: number
-      }>(`${POSTS_STORAGE_PREFIX}${storageKey}`)
-      return postsData
-    } catch (error) {
-      console.error("Error loading offline posts:", error)
-    }
-    return null
-  }
-
-  const saveOfflinePosts = async (
-    storageKey: string,
-    data: { posts: PostType[]; totalPages: number }
-  ): Promise<void> => {
-    try {
-      await offlineCache.set(
-        `${POSTS_STORAGE_PREFIX}${storageKey}`,
-        data,
-        OFFLINE_MAX_AGE
-      )
-      await offlineCache.set(
-        `${POSTS_TIMESTAMP_PREFIX}${storageKey}`,
-        Date.now(),
-        OFFLINE_MAX_AGE
-      )
-    } catch (error) {
-      console.error("Error saving offline posts:", error)
-    }
-  }
+  }, [categoryId, page])
 
   return { posts, loading, error, page, totalPages, setPage }
 }

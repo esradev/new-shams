@@ -5,9 +5,9 @@ import { useColorScheme } from "nativewind"
 
 import CategoryList from "@/components/category-list"
 import CourseCard from "@/components/course-card"
-import LoadingSpinner from "@/components/loading-spinner"
 import { useApi } from "@/context/api-context"
 import GlobalError from "@/components/global-error"
+import GlobalLoading from "@/components/global-loading"
 
 export default function HomePage() {
   const { colorScheme } = useColorScheme()
@@ -19,7 +19,7 @@ export default function HomePage() {
         {error ? (
           <GlobalError type="network" message={error?.message} />
         ) : loading ? (
-          <LoadingSpinner />
+          <GlobalLoading message="در حال آماده سازی برنامه" />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <View className="p-6">

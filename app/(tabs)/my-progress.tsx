@@ -12,7 +12,7 @@ import { router } from "expo-router"
 import { useColorScheme } from "nativewind"
 
 import { useCoursesProgress } from "@/hooks/use-courses-progress"
-import LoadingSpinner from "@/components/loading-spinner"
+import GlobalLoading from "@/components/global-loading"
 
 export default function MyProgressPage() {
   const { colorScheme } = useColorScheme()
@@ -41,12 +41,7 @@ export default function MyProgressPage() {
     return (
       <SafeAreaProvider>
         <SafeAreaView className="flex-1 bg-stone-50 dark:bg-stone-950">
-          <View className="flex-1 items-center justify-center">
-            <LoadingSpinner />
-            <Text className="text-stone-600 dark:text-stone-400 mt-4 text-center">
-              در حال بارگذاری پیشرفت...
-            </Text>
-          </View>
+          <GlobalLoading message="کمی صبر کنید" description="در حال بارگذاری پیشرفت شما..." type="data" />
         </SafeAreaView>
       </SafeAreaProvider>
     )
@@ -77,7 +72,7 @@ export default function MyProgressPage() {
                 color={colorScheme === "dark" ? "#059669" : "#047857"}
               />
               <Text className="text-3xl font-bold text-stone-900 dark:text-stone-100 text-center">
-                پیشرفت من
+                ادامه مطالعه
               </Text>
             </View>
 
@@ -223,7 +218,7 @@ export default function MyProgressPage() {
               </Text>
 
               <Pressable
-                onPress={() => router.push("/courses")}
+                onPress={() => router.push("/")}
                 className="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 px-6 py-3 rounded-xl flex flex-row items-center gap-3"
               >
                 <Text className="text-white font-medium text-lg">

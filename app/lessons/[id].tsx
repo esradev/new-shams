@@ -8,10 +8,10 @@ import { useLocalSearchParams } from "expo-router"
 
 import AudioPlayer from "@/components/audio-player"
 import LessonActions from "@/components/lesson-actions"
-import LoadingSpinner from "@/components/loading-spinner"
 import { useColorScheme } from "nativewind"
 import { useLesson } from "@/hooks/use-lesson"
 import { createHighlightedHTMLAsync } from "@/utils/text-highlight"
+import GlobalLoading from "@/components/global-loading"
 
 export default function LessonPage() {
   const { id, categoryId, categoryName, searchQuery } = useLocalSearchParams()
@@ -84,12 +84,7 @@ export default function LessonPage() {
     return (
       <SafeAreaProvider>
         <SafeAreaView className="flex-1 bg-stone-50 dark:bg-stone-950">
-          <View className="flex-1 items-center justify-center">
-            <LoadingSpinner />
-            <Text className="text-stone-600 dark:text-stone-400 mt-4 text-center">
-              در حال بارگذاری درس...
-            </Text>
-          </View>
+          <GlobalLoading message="کمی صبر کنید" description="در حال بارگذاری درس..." type="data" />
         </SafeAreaView>
       </SafeAreaProvider>
     )
@@ -222,12 +217,7 @@ export default function LessonPage() {
 
               {/* Content Loading State */}
               {contentLoading ? (
-                <View className="py-8 items-center">
-                  <LoadingSpinner />
-                  <Text className="text-center text-sm text-stone-500 dark:text-stone-400 mt-2">
-                    در حال پردازش محتوا...
-                  </Text>
-                </View>
+                <GlobalLoading compact message="در حال پردازش محتوا..." />
               ) : (
                 <RenderHTML
                   source={{

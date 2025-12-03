@@ -11,9 +11,9 @@ import { Search as SearchIcon, X, Filter, FilterX } from "lucide-react-native";
 
 import { useSearch } from "@/hooks/use-search";
 import { useApi } from "@/context/api-context";
-import LoadingSpinner from "@/components/loading-spinner";
 import SearchResultCard from "@/components/search-result-card";
 import { PostType } from "@/hooks/use-posts-by-category";
+import GlobalLoading from "@/components/global-loading";
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -231,7 +231,7 @@ export default function Search() {
           {/* Search Results */}
           <View className="flex-1">
             {loading && posts.length === 0 ? (
-              <LoadingSpinner />
+              <GlobalLoading compact message="در حال جستجو..." type="data" />
             ) : error ? (
               <View className="flex-1 items-center justify-center px-4">
                 <Text className="text-red-500 text-lg font-bold text-center mb-4">
@@ -278,7 +278,7 @@ export default function Search() {
                 ListFooterComponent={
                   loading && posts.length > 0 ? (
                     <View className="py-4">
-                      <LoadingSpinner />
+                      <GlobalLoading compact message="در حال بارگذاری نتایج بیشتر..." type="data" />
                     </View>
                   ) : null
                 }
