@@ -35,7 +35,6 @@ const LessonCard: React.FC<Lesson> = (lesson) => {
           categoryName: categoryName || ""
         }
       }}
-      key={id}
       className="flex flex-row-reverse items-center p-3 rounded-lg bg-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
     >
       <Pressable className="flex flex-row-reverse items-center w-full">

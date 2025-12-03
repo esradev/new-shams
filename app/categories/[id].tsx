@@ -108,7 +108,7 @@ const Categories = () => {
                 <View className="gap-y-3">
                   {posts.map((lesson, index) => {
                     return (
-                      <LessonCard {...lesson} index={index} page={page} />
+                      <LessonCard key={index} {...lesson} index={index} page={page} />
                     )
                   })}
                 </View>
