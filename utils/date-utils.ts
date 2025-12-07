@@ -30,7 +30,6 @@ export const formatPersianDate = (dateString: string | undefined): string => {
       day: "numeric"
     })
   } catch (error) {
-    console.warn("Date formatting error:", error)
     return "تاریخ نامعتبر"
   }
 }

@@ -44,7 +44,6 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const initializeCache = async () => {
       try {
-        console.log("Initializing cache system...")
         await storage.initializeCacheSystem()
         setIsInitialized(true)
 
@@ -67,7 +66,6 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
       const health = await cacheHealthMonitor.checkCacheHealth()
 
       if (!health.apiCache.healthy) {
-        console.warn("API cache unhealthy, performing maintenance...")
         await cacheHealthMonitor.performMaintenance()
       }
     }
@@ -103,7 +101,6 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // If storage is full, try emergency cleanup and retry once
       if (error instanceof Error && error.message?.includes("SQLITE_FULL")) {
-        console.warn("Storage full, attempting emergency cleanup...")
         try {
           await cacheHealthMonitor.emergencyCleanup()
           await apiCache.set(cacheKey, data, DEFAULT_MAX_AGE)
@@ -139,7 +136,6 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Add safety check for cacheEntries
       if (!cacheEntries || !Array.isArray(cacheEntries)) {
-        console.warn("Cache entries is not an array, returning empty stats")
         const emptyCacheStats: CacheStats = {
           totalEntries: stats.totalItems || 0,
           totalSize: stats.totalSize || 0,
@@ -196,7 +192,6 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({
       // If network fails, try to return any cached data as fallback
       const staleData = await apiCache.get(encodeURIComponent(url))
       if (staleData !== null) {
-        console.warn("Network failed, returning stale cached data:", url)
         return staleData
       }
 

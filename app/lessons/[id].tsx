@@ -45,7 +45,6 @@ export default function LessonPage() {
 
         setProcessedContent(content)
       } catch (err) {
-        console.warn("Content processing failed:", err)
         setProcessedContent(lesson.content.rendered)
       } finally {
         setContentLoading(false)
@@ -84,7 +83,11 @@ export default function LessonPage() {
     return (
       <SafeAreaProvider>
         <SafeAreaView className="flex-1 bg-stone-50 dark:bg-stone-950">
-          <GlobalLoading message="کمی صبر کنید" description="در حال بارگذاری درس..." type="data" />
+          <GlobalLoading
+            message="کمی صبر کنید"
+            description="در حال بارگذاری درس..."
+            type="data"
+          />
         </SafeAreaView>
       </SafeAreaProvider>
     )

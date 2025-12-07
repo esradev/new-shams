@@ -21,13 +21,6 @@ const _layout = () => {
         }}
       />
       <Tabs.Screen
-        name="my-progress"
-        options={{
-          title: "ادامه مطالعه",
-          header: () => <Header />
-        }}
-      />
-      <Tabs.Screen
         name="settings"
         options={{
           title: "تنظیمات",

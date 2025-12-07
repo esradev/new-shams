@@ -9,11 +9,6 @@ class AsyncStorageWrapper {
   }
 
   getString(key: string): string | undefined {
-    // AsyncStorage is async, but we'll use a sync fallback for now
-    // In practice, this should be handled differently for real apps
-    console.warn(
-      "Using AsyncStorage fallback - consider enabling new architecture for MMKV"
-    )
     return undefined
   }
 
@@ -79,8 +74,6 @@ try {
     encryptionKey: "shams-offline-key"
   })
 } catch (error) {
-  console.warn("MMKV not available, falling back to AsyncStorage:", error)
-
   storage = new AsyncStorageWrapper("user-storage")
   cacheStorage = new AsyncStorageWrapper("cache-storage")
   offlineStorage = new AsyncStorageWrapper("offline-storage")
@@ -488,8 +481,6 @@ export class AsyncMMKVCache {
             }
           }
         } catch (parseError) {
-          console.warn(`Failed to parse cache item for key ${key}:`, parseError)
-          // Clean up corrupted data
           try {
             await AsyncStorage.removeItem(key)
           } catch (removeError) {
@@ -522,7 +513,6 @@ export class AsyncMMKVCache {
 
       if (keysToRemove.length > 0) {
         await AsyncStorage.multiRemove(keysToRemove)
-        console.log(`Cleaned ${keysToRemove.length} expired cache items`)
       }
     } catch (error) {
       console.error("Clean expired error:", error)
@@ -537,7 +527,6 @@ export class AsyncMMKVCache {
     try {
       const items = await this.getAllCachedItems()
       if (!items || !Array.isArray(items)) {
-        console.warn("getAllCachedItems did not return an array")
         return { totalItems: 0, totalSize: 0, expiredItems: 0 }
       }
 
@@ -564,7 +553,6 @@ export class AsyncMMKVCache {
             expiredItems++
           }
         } catch (itemError) {
-          console.warn(`Error processing cache item ${key}:`, itemError)
           // Count as expired if corrupted
           expiredItems++
         }
