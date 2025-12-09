@@ -1,20 +1,19 @@
-import React from "react";
-import { View, Text, ActivityIndicator } from "react-native";
-import { Loader2, BookOpen, Download } from "lucide-react-native";
+import React from "react"
+import { View, Text, ActivityIndicator } from "react-native"
 
 interface GlobalLoadingProps {
   /** Loading message to display */
-  message?: string;
+  message?: string
   /** Optional detailed loading description */
-  description?: string;
+  description?: string
   /** Type of loading for different styling and icons */
-  type?: "default" | "data" | "download";
+  type?: "default" | "data" | "download"
   /** Whether to show the loading in a compact format */
-  compact?: boolean;
+  compact?: boolean
   /** Size of the spinner */
-  size?: "small" | "large";
+  size?: "small" | "large"
   /** Custom color for the spinner */
-  color?: string;
+  color?: string
 }
 
 /**
@@ -27,29 +26,18 @@ const GlobalLoading: React.FC<GlobalLoadingProps> = ({
   type = "default",
   compact = false,
   size = "large",
-  color = "#10b981",
+  color = "#10b981"
 }) => {
-  const getLoadingIcon = () => {
-    switch (type) {
-      case "data":
-        return <BookOpen size={compact ? 24 : 48} color={color} />;
-      case "download":
-        return <Download size={compact ? 24 : 48} color={color} />;
-      default:
-        return <Loader2 size={compact ? 24 : 48} color={color} />;
-    }
-  };
-
   const getDefaultDescription = () => {
     switch (type) {
       case "data":
-        return "در حال دریافت اطلاعات...";
+        return "در حال دریافت اطلاعات..."
       case "download":
-        return "در حال دانلود...";
+        return "در حال دانلود..."
       default:
-        return "لطفاً کمی صبر کنید";
+        return "لطفاً کمی صبر کنید"
     }
-  };
+  }
 
   if (compact) {
     return (
@@ -59,7 +47,7 @@ const GlobalLoading: React.FC<GlobalLoadingProps> = ({
           {message}
         </Text>
       </View>
-    );
+    )
   }
 
   return (
@@ -79,7 +67,7 @@ const GlobalLoading: React.FC<GlobalLoadingProps> = ({
         {description || getDefaultDescription()}
       </Text>
     </View>
-  );
-};
+  )
+}
 
-export default GlobalLoading;
+export default GlobalLoading

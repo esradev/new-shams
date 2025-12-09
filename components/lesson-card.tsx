@@ -1,26 +1,23 @@
-import { Link } from 'expo-router';
-import { Check } from 'lucide-react-native';
-import * as React from 'react';
-import { Text } from 'react-native';
-import { View } from 'react-native';
-import { Pressable } from 'react-native';
+import { Link } from "expo-router"
+import * as React from "react"
+import { Text, View, Pressable } from "react-native"
 
 interface Lesson {
-  id: number;
+  id: number
   title: {
-    rendered: string;
-  };
+    rendered: string
+  }
   meta: {
-    "date-of-the-lesson"?: string;
-    "the-audio-of-the-lesson"?: string;
-  };
-  page: number;
-  index: number;
-  categoryId?:  string;
-  categoryName?: string;
+    "date-of-the-lesson"?: string
+    "the-audio-of-the-lesson"?: string
+  }
+  page: number
+  index: number
+  categoryId?: string
+  categoryName?: string
 }
 
-const LessonCard: React.FC<Lesson> = (lesson) => {
+const LessonCard: React.FC<Lesson> = lesson => {
   const { id, title, meta, categoryId, categoryName, page, index } = lesson
   const lessonNumber = (page - 1) * 20 + index + 1
 
@@ -46,14 +43,13 @@ const LessonCard: React.FC<Lesson> = (lesson) => {
             className={`text-lg font-medium text-right dir-rtl ${
               // isLessonCompleted(id.toString())
               //   ? "text-emerald-700 dark:text-emerald-400" :
-                 "text-gray-800 dark:text-gray-200"
+              "text-gray-800 dark:text-gray-200"
             }`}
           >
             {title?.rendered}
           </Text>
           <Text className="text-base text-gray-500 dark:text-gray-500 text-right dir-rtl">
-            {meta?.["date-of-the-lesson"] ||
-              "تاریخ نامشخص"}
+            {meta?.["date-of-the-lesson"] || "تاریخ نامشخص"}
           </Text>
         </View>
         {/*{isLessonCompleted(id.toString()) && (
@@ -63,7 +59,7 @@ const LessonCard: React.FC<Lesson> = (lesson) => {
         )}*/}
       </Pressable>
     </Link>
-  );
-};
+  )
+}
 
-export default LessonCard;
+export default LessonCard

@@ -1,27 +1,21 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  FlatList,
-} from "react-native";
-import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import { Search as SearchIcon, X, Filter, FilterX } from "lucide-react-native";
+import React, { useState, useEffect } from "react"
+import { View, Text, TextInput, Pressable, FlatList } from "react-native"
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
+import { Search as SearchIcon, X, Filter, FilterX } from "lucide-react-native"
 
-import { useSearch } from "@/hooks/use-search";
-import { useApi } from "@/context/api-context";
-import SearchResultCard from "@/components/search-result-card";
-import { PostType } from "@/hooks/use-posts-by-category";
-import GlobalLoading from "@/components/global-loading";
+import { useSearch } from "@/hooks/use-search"
+import { useApi } from "@/context/api-context"
+import SearchResultCard from "@/components/search-result-card"
+import { PostType } from "@/hooks/use-posts-by-category"
+import GlobalLoading from "@/components/global-loading"
 
 export default function Search() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([])
+  const [showFilters, setShowFilters] = useState(false)
+  const [page, setPage] = useState(1)
 
-  const { categories, loading: categoriesLoading } = useApi();
+  const { categories, loading: categoriesLoading } = useApi()
   const {
     posts,
     loading,
@@ -29,64 +23,64 @@ export default function Search() {
     totalPages,
     totalResults,
     search,
-    clearSearch,
-  } = useSearch();
+    clearSearch
+  } = useSearch()
 
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim()) {
-        setPage(1);
+        setPage(1)
         search({
           query: searchQuery,
           categories: selectedCategories,
           page: 1,
-          perPage: 20,
-        });
+          perPage: 20
+        })
       } else {
-        clearSearch();
+        clearSearch()
       }
-    }, 500);
+    }, 500)
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, selectedCategories]);
+    return () => clearTimeout(timer)
+  }, [searchQuery, selectedCategories, search, clearSearch])
 
   const handleClearSearch = () => {
-    setSearchQuery("");
-    setSelectedCategories([]);
-    clearSearch();
-  };
+    setSearchQuery("")
+    setSelectedCategories([])
+    clearSearch()
+  }
 
   const clearFilters = () => {
-    setSelectedCategories([]);
-  };
+    setSelectedCategories([])
+  }
 
   const toggleCategory = (categoryId: number) => {
-    setSelectedCategories((prev) =>
+    setSelectedCategories(prev =>
       prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId],
-    );
-  };
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    )
+  }
 
   const loadMore = () => {
     if (page < totalPages && !loading && searchQuery.trim()) {
-      const nextPage = page + 1;
-      setPage(nextPage);
+      const nextPage = page + 1
+      setPage(nextPage)
       search({
         query: searchQuery,
         categories: selectedCategories,
         page: nextPage,
-        perPage: 20,
-      });
+        perPage: 20
+      })
     }
-  };
+  }
 
   const renderSearchResult = ({ item }: { item: PostType }) => (
     <View className="mb-3">
       <SearchResultCard post={item} searchQuery={searchQuery} />
     </View>
-  );
+  )
 
   return (
     <SafeAreaProvider>
@@ -172,7 +166,7 @@ export default function Search() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   inverted
-                  keyExtractor={(item) => item.id.toString()}
+                  keyExtractor={item => item.id.toString()}
                   renderItem={({ item: category }) => (
                     <Pressable
                       onPress={() => toggleCategory(category.id)}
@@ -204,10 +198,10 @@ export default function Search() {
                     فیلترهای انتخاب شده: {selectedCategories.length} دسته‌بندی
                   </Text>
                   <View className="flex flex-row-reverse flex-wrap gap-2">
-                    {selectedCategories.map((categoryId) => {
+                    {selectedCategories.map(categoryId => {
                       const category = categories.find(
-                        (cat) => cat.id === categoryId,
-                      );
+                        cat => cat.id === categoryId
+                      )
                       return category ? (
                         <View
                           key={categoryId}
@@ -220,7 +214,7 @@ export default function Search() {
                             <X size={12} color="#fff" />
                           </Pressable>
                         </View>
-                      ) : null;
+                      ) : null
                     })}
                   </View>
                 </View>
@@ -242,7 +236,7 @@ export default function Search() {
                     search({
                       query: searchQuery,
                       categories: selectedCategories,
-                      page: 1,
+                      page: 1
                     })
                   }
                   className="bg-emerald-500 px-4 py-2 rounded-lg"
@@ -260,7 +254,7 @@ export default function Search() {
             ) : posts.length === 0 ? (
               <View className="flex-1 items-center justify-center px-4">
                 <Text className="text-gray-500 dark:text-gray-400 text-lg text-center">
-                  نتیجه‌ای برای "{searchQuery}" یافت نشد
+                  هیچ نتیجه‌ای برای &quot;{searchQuery}&quot; پیدا نشد
                 </Text>
                 <Text className="text-gray-400 dark:text-gray-500 text-sm text-center mt-2">
                   کلمات کلیدی دیگری امتحان کنید
@@ -270,7 +264,7 @@ export default function Search() {
               <FlatList
                 data={posts}
                 renderItem={renderSearchResult}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={item => item.id.toString()}
                 className="flex-1"
                 contentContainerStyle={{ padding: 16 }}
                 onEndReached={loadMore}
@@ -278,7 +272,11 @@ export default function Search() {
                 ListFooterComponent={
                   loading && posts.length > 0 ? (
                     <View className="py-4">
-                      <GlobalLoading compact message="در حال بارگذاری نتایج بیشتر..." type="data" />
+                      <GlobalLoading
+                        compact
+                        message="در حال بارگذاری نتایج بیشتر..."
+                        type="data"
+                      />
                     </View>
                   ) : null
                 }
@@ -288,5 +286,5 @@ export default function Search() {
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
-  );
+  )
 }

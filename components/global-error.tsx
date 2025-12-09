@@ -1,22 +1,22 @@
-import React from "react";
-import { View, Text, Pressable } from "react-native";
-import { AlertTriangle, RefreshCw, Wifi, WifiOff } from "lucide-react-native";
+import React from "react"
+import { View, Text, Pressable } from "react-native"
+import { AlertTriangle, RefreshCw, WifiOff } from "lucide-react-native"
 
 interface GlobalErrorProps {
   /** Error message to display */
-  message?: string;
+  message?: string
   /** Optional detailed error description */
-  description?: string;
+  description?: string
   /** Retry function to call when retry button is pressed */
-  onRetry?: () => void;
+  onRetry?: () => void
   /** Whether retry is currently in progress */
-  retryLoading?: boolean;
+  retryLoading?: boolean
   /** Type of error for different styling */
-  type?: "network" | "server" | "general";
+  type?: "network" | "server" | "general"
   /** Custom retry button text */
-  retryText?: string;
+  retryText?: string
   /** Whether to show the error in a compact format */
-  compact?: boolean;
+  compact?: boolean
 }
 
 /**
@@ -30,29 +30,29 @@ const GlobalError: React.FC<GlobalErrorProps> = ({
   retryLoading = false,
   type = "general",
   retryText = "تلاش مجدد",
-  compact = false,
+  compact = false
 }) => {
   const getErrorIcon = () => {
     switch (type) {
       case "network":
-        return <WifiOff size={compact ? 32 : 48} color="#DC2626" />;
+        return <WifiOff size={compact ? 32 : 48} color="#DC2626" />
       case "server":
-        return <AlertTriangle size={compact ? 32 : 48} color="#DC2626" />;
+        return <AlertTriangle size={compact ? 32 : 48} color="#DC2626" />
       default:
-        return <AlertTriangle size={compact ? 32 : 48} color="#DC2626" />;
+        return <AlertTriangle size={compact ? 32 : 48} color="#DC2626" />
     }
-  };
+  }
 
   const getDefaultDescription = () => {
     switch (type) {
       case "network":
-        return "لطفاً اتصال اینترنت خود را بررسی کنید";
+        return "لطفاً اتصال اینترنت خود را بررسی کنید"
       case "server":
-        return "مشکلی در سرور رخ داده است. لطفاً بعداً دوباره تلاش کنید";
+        return "مشکلی در سرور رخ داده است. لطفاً بعداً دوباره تلاش کنید"
       default:
-        return "لطفاً دوباره تلاش کنید";
+        return "لطفاً دوباره تلاش کنید"
     }
-  };
+  }
 
   if (compact) {
     return (
@@ -91,7 +91,7 @@ const GlobalError: React.FC<GlobalErrorProps> = ({
           </Pressable>
         )}
       </View>
-    );
+    )
   }
 
   return (
@@ -142,7 +142,7 @@ const GlobalError: React.FC<GlobalErrorProps> = ({
         اگر مشکل همچنان ادامه دارد، لطفاً با پشتیبانی تماس بگیرید
       </Text>
     </View>
-  );
-};
+  )
+}
 
-export default GlobalError;
+export default GlobalError

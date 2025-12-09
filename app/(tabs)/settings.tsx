@@ -6,11 +6,11 @@ import {
   Pressable,
   Alert,
   RefreshControl,
-  FlatList
+  FlatList,
+  Platform
 } from "react-native"
 import { router } from "expo-router"
 import * as FileSystem from "expo-file-system"
-import { Platform } from "react-native"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
 import {
   Activity,
@@ -32,7 +32,6 @@ import {
   UserActivity,
   DownloadedLesson
 } from "@/hooks/use-local-storage"
-import { useCache, CacheStats } from "@/context/cache-context"
 import { formatPersianDate } from "@/utils/date-utils"
 import GlobalLoading from "@/components/global-loading"
 
@@ -54,7 +53,6 @@ export default function Settings() {
   const [activeSection, setActiveSection] =
     useState<SettingsSection>("overview")
   const [refreshing, setRefreshing] = useState(false)
-  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   const {
@@ -65,16 +63,12 @@ export default function Settings() {
     loadAllData
   } = useLocalStorage()
 
-  const { getCacheStats } = useCache()
-
   const stats = getStatistics()
 
   const onRefresh = async () => {
     setRefreshing(true)
     try {
       await loadAllData()
-      const stats = await getCacheStats()
-      setCacheStats(stats)
     } finally {
       setRefreshing(false)
     }
@@ -90,6 +84,7 @@ export default function Settings() {
         (FileSystem as any).documentDirectory !== null
       )
     } catch (error) {
+      console.error("FileSystem is not available:", error)
       return false
     }
   }
@@ -124,6 +119,7 @@ export default function Settings() {
               // Remove from local storage
               await removeFromDownloads(lessonId)
             } catch (error) {
+              console.error("Error deleting download:", error)
               Alert.alert("خطا", "مشکلی در حذف فایل پیش آمد")
             }
           }
@@ -172,6 +168,7 @@ export default function Settings() {
 
               Alert.alert("موفق", "تمام فایل‌های دانلود شده حذف شدند")
             } catch (error) {
+              console.error("Error clearing all downloads:", error)
               Alert.alert("خطا", "مشکلی در حذف فایل‌ها پیش آمد")
             }
           }

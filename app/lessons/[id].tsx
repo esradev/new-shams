@@ -1,10 +1,9 @@
 import React, { useMemo, useState, useEffect } from "react"
-import { Link } from "expo-router"
+import { Link, useLocalSearchParams } from "expo-router"
 import { View, Text, ScrollView } from "react-native"
 import { BookOpen, Calendar, User } from "lucide-react-native"
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
 import RenderHTML from "react-native-render-html"
-import { useLocalSearchParams } from "expo-router"
 
 import AudioPlayer from "@/components/audio-player"
 import LessonActions from "@/components/lesson-actions"
@@ -45,6 +44,7 @@ export default function LessonPage() {
 
         setProcessedContent(content)
       } catch (err) {
+        console.error("Error processing content:", err)
         setProcessedContent(lesson.content.rendered)
       } finally {
         setContentLoading(false)
@@ -213,7 +213,7 @@ export default function LessonPage() {
                 searchQuery.trim() && (
                   <View className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border-r-4 border-yellow-400 dark:border-yellow-500">
                     <Text className="text-sm text-yellow-800 dark:text-yellow-200 text-right dir-rtl">
-                      نتایج جستجو برای: "{searchQuery}"
+                      نتایج جستجو برای: &quot;{searchQuery}&quot;
                     </Text>
                   </View>
                 )}

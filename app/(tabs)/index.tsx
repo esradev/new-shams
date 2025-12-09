@@ -42,8 +42,8 @@ export default function HomePage() {
           </ScrollView>
         )}
         <StatusBar
-          barStyle={colorScheme == "dark" ? "light-content" : "dark-content"}
-          backgroundColor={colorScheme == "dark" ? "#1C1917" : "#F0FDF4"}
+          barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+          backgroundColor={colorScheme === "dark" ? "#1C1917" : "#F0FDF4"}
         />
       </SafeAreaView>
     </SafeAreaProvider>

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet } from "react-native"
+import { Pressable } from "react-native"
 import React, { useEffect } from "react"
 import Animated, {
   interpolate,

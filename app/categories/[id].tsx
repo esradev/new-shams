@@ -2,10 +2,7 @@ import React, { useState } from "react"
 import { Text, ScrollView, View, Pressable } from "react-native"
 import { useLocalSearchParams, useNavigation } from "expo-router"
 import { SafeAreaView } from "react-native-safe-area-context"
-import {
-  ChevronDown,
-  ChevronUp
-} from "lucide-react-native"
+import { ChevronDown, ChevronUp } from "lucide-react-native"
 
 import GlobalLoading from "@/components/global-loading"
 import Pagination from "@/components/pagination"
@@ -29,7 +26,7 @@ const Categories = () => {
     if (category) {
       navigation.setOptions({ title: category.name })
     }
-  }, [category])
+  }, [category, navigation])
 
   if (error || !category) {
     return (
@@ -89,9 +86,8 @@ const Categories = () => {
                 <Text className="text-lg font-semibold text-gray-800 dark:text-gray-200 text-right dir-rtl">
                   جلسات
                 </Text>
-
               </View>
-               {loading ? (
+              {loading ? (
                 <GlobalLoading
                   compact
                   message="در حال بارگذاری درس‌ها..."
@@ -108,7 +104,12 @@ const Categories = () => {
                 <View className="gap-y-3">
                   {posts.map((lesson, index) => {
                     return (
-                      <LessonCard key={index} {...lesson} index={index} page={page} />
+                      <LessonCard
+                        key={index}
+                        {...lesson}
+                        index={index}
+                        page={page}
+                      />
                     )
                   })}
                 </View>
@@ -116,14 +117,14 @@ const Categories = () => {
             </View>
           </View>
         </ScrollView>
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                setPage={(newPage) => setPage(newPage)}
-              />
-            )}
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            setPage={newPage => setPage(newPage)}
+          />
+        )}
       </View>
     </SafeAreaView>
   )

@@ -52,6 +52,7 @@ const LessonActions: React.FC<LessonActionsProps> = ({
         })
       }
     } catch (error) {
+      console.error("Error toggling completion:", error)
       Alert.alert("خطا", "مشکلی در ذخیره اطلاعات پیش آمد")
     } finally {
       setLoading(prev => ({ ...prev, completed: false }))
@@ -75,6 +76,7 @@ const LessonActions: React.FC<LessonActionsProps> = ({
         })
       }
     } catch (error) {
+      console.error("Error toggling favorite:", error)
       Alert.alert("خطا", "مشکلی در ذخیره اطلاعات پیش آمد")
     } finally {
       setLoading(prev => ({ ...prev, favorite: false }))
